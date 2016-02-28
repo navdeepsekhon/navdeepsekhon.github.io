@@ -165,9 +165,7 @@
                     "title": "PopMovies Web",
                     "thumbnail": "https://raw.githubusercontent.com/navdeepsekhon/navdeepsekhon.github.io/master/images/popmovies-main.PNG",
                     "link": "https://github.com/navdeepsekhon/popmovies-web",
-                    "description": [
-                        "Webapp for discovering popular movies. Built using Node.js Express and Angular 2."
-                    ],
+                    "description":  "Webapp for discovering popular movies. Built using Node.js Express and Angular 2.",
                     "gallery": [
                         "https://raw.githubusercontent.com/navdeepsekhon/navdeepsekhon.github.io/master/images/popmovies-main.PNG",
                         "https://raw.githubusercontent.com/navdeepsekhon/navdeepsekhon.github.io/master/images/popmovies-details.PNG"
