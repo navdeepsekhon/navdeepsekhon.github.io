@@ -15,7 +15,7 @@
         "phone": "732-860-8502",
         "website": "",
         "shortBio": "<i>Hello! I am Navdeep Sekhon. I like programming and tea. Usually I take both at the same time. I have a passion for solving problems and learning new things.</i><p class='text-center'><i>I have written code for front-end, back-end, mobile apps etcetera etcetera. I never shy away from a challenge and I am always looking for opportunities to push my boundaries and build new and exciting things. Here are some of the things I built in my free time while learning new technologies.</i></p><p class='text-center'><i>Feel free to say hello on <a href='https://www.linkedin.com/in/navdeepsekhon' target='_blank'>LinkedIn</a> or any other network listed below</i> :)</p>",
-        "location": "Delaware",
+        "location": "New York, New York",
         "profiles": [
             {
                 "network": "Twitter",
@@ -37,12 +37,29 @@
     },
     "work": [
         {
+            "employer": "Broadridge Financial Solutions",
+            "location": "New York, NY",
+            "title": "Software Engineer",
+            "website": "http://http://www.broadridge.com/",
+            "dates": "July 2016 - Present",
+            "highlights": [
+                "Developing a NoSQL based post trade processing solution to be used by world's largest financial institutions"
+                ]
+        },
+        {
             "employer": "JPMorgan Chase",
             "location": "Newark, DE",
             "title": "Application Developer",
             "website": "https://www.jpmorganchase.com/",
-            "dates": "July 2014 - Present",
-            "highlights": []
+            "dates": "July 2014 - July 2016",
+            "highlights": [
+                "Responsible for developing strategic Document Management System for storing and searching hundreds of thousands of bank’s legal documents",
+                "Implemented algorithm to dynamically generate JavaScript (ExtJS) code for the UI to auto-generate screens for different types of legal documents",
+                "Implemented several different types of search functionality on top of a NoSQL database",
+                "Worked on all tiers of the application including frontend, backend and database",
+                "Worked with globally distributed teams in an Agile environment",
+                "Some of the technologies used: JAVA, ExtJS, Marklogic, SQL, SpEL, XQuery, XSLT, XML parsers"
+                ]
         },
         {
             "employer": "SevOne Inc.",
