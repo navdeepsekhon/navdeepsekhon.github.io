@@ -13,7 +13,7 @@
         "image": "",
         "email": "hey@navdeep.co",
         "website": "",
-        "shortBio": "<i>Hello! I am Navdeep. I write code.</i><p class='text-center'><i>This website is powered by the javascript framework I created. <a href='https://github.com/navdeepsekhon/portfolio-generator' target='_blank'>Check it out!</a></i></p>",
+        "shortBio": "<i>Hello! I am Navdeep. I write code.</i>",
         "location": "New York, New York",
         "profiles": [
             {
