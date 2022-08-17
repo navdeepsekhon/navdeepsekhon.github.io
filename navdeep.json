@@ -40,13 +40,23 @@
     },
     "work": [
         {
+            "employer": "Apple",
+            "location": "New York, NY",
+            "title": "Software Engineer",
+            "website": "http://www.apple.com/",
+            "dates": "August 2022 - Present",
+            "highlights": [
+                "Apple Media Products Arch"
+            ]
+        },
+        {
             "employer": "Broadridge Financial Solutions",
             "location": "New York/Toronto",
             "title": "Software Engineer",
             "website": "http://www.broadridge.com/",
-            "dates": "July 2016 - Present",
+            "dates": "July 2016 - August 2022",
             "highlights": [
-                "Developing a NoSQL based post trade processing solution to be used by world's largest financial institutions"
+                "Developed an ETL and search platform from whiteboard to production."
                 ]
         },
         {
