@@ -40,13 +40,23 @@
     },
     "work": [
         {
+            "employer": "Snap",
+            "location": "New York, NY",
+            "title": "Software Engineer",
+            "website": "http://www.snap.com/",
+            "dates": "November 2024 - Present",
+            "highlights": [
+                "Ads"
+            ]
+        },
+        {
             "employer": "Apple",
             "location": "New York, NY",
             "title": "Software Engineer",
             "website": "http://www.apple.com/",
-            "dates": "August 2022 - Present",
+            "dates": "August 2022 - November 2024",
             "highlights": [
-                "Apple Media Products Arch"
+                "Responsible for global cross-region, cross-datastore replication of petabyte scale data."
             ]
         },
         {
