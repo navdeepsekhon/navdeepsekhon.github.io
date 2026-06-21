@@ -563,9 +563,11 @@
 
                 // Typography positioning
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `bold ${Math.round(11 * scaleFactor)}px sans-serif`;
+                const fontSize = window.innerWidth < 768 ? 14 : Math.round(11 * scaleFactor);
+                ctx.font = `bold ${fontSize}px sans-serif`;
                 ctx.textAlign = 'center';
-                ctx.fillText(node.meta.title, 0, -22 * scaleFactor);
+                const textYOffset = window.innerWidth < 768 ? -22 : -22 * scaleFactor;
+                ctx.fillText(node.meta.title, 0, textYOffset);
 
                 ctx.restore();
             });
