@@ -107,7 +107,7 @@
     <main class="absolute inset-0 z-0 bg-[#030712] w-full h-full md:relative md:flex-1 md:h-screen overflow-hidden cursor-crosshair">
         <!-- Floating instruction badge -->
         <div
-            class="absolute bottom-6 left-6 md:bottom-auto md:top-6 md:left-[400px] pointer-events-none z-10 bg-slate-900/80 border border-slate-850 px-4 py-2 rounded-full backdrop-blur-sm text-xs font-mono flex items-center gap-2">
+            class="absolute top-20 md:top-6 left-6 md:left-[400px] pointer-events-none z-10 bg-slate-900/80 border border-slate-850 px-4 py-2 rounded-full backdrop-blur-sm text-xs font-mono flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span class="text-slate-300">LIVE DATA REPLICATION STREAM</span>
         </div>
@@ -178,7 +178,8 @@
             emitterY = 30;
 
             // 1. Static Boundaries (Floor, Walls)
-            const floor = Bodies.rectangle(w / 2, h + 30, w, 60, { isStatic: true });
+            const floorOffset = window.innerWidth < 768 ? 60 : 0;
+            const floor = Bodies.rectangle(w / 2, h - floorOffset + 30, w, 60, { isStatic: true });
             const leftWall = Bodies.rectangle(-30, h / 2, 60, h, { isStatic: true });
             const rightWall = Bodies.rectangle(w + 30, h / 2, 60, h, { isStatic: true });
             bounds = [floor, leftWall, rightWall];
