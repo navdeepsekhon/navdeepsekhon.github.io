@@ -11,6 +11,11 @@
     <title>Navdeep Sekhon | Software Engineer (3D Conduit)</title>
     <script src="https://www.googletagmanager.com/gtag/js?id=UA-71739348-1" async></script>
     <script>
+        // Mask URL back to root domain
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, '/');
+        }
+
         function gtag() { dataLayer.push(arguments) }
         window.dataLayer = window.dataLayer || [];
         gtag("js", new Date);
