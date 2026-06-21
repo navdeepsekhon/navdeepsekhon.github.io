@@ -51,7 +51,7 @@
     </div>
 
     <!-- MOBILE FLOATING HEADER -->
-    <header id="mobile-header" class="lg:hidden fixed top-4 left-4 right-4 z-10 flex items-center justify-between bg-slate-900/80 backdrop-blur-md border border-slate-800/60 p-4 rounded-xl shadow-lg pointer-events-none transition-opacity duration-300">
+    <header id="mobile-header" class="lg:hidden fixed top-4 left-4 right-4 z-10 flex items-center justify-between bg-slate-900/80 backdrop-blur-md border border-slate-800/60 p-4 rounded-xl shadow-lg pointer-events-none transition-all duration-500">
         <div class="flex flex-col">
             <h1 class="text-lg font-bold text-white leading-tight">Navdeep Sekhon</h1>
             <p class="text-[10px] font-mono text-indigo-400 uppercase tracking-widest">Software Engineer</p>
@@ -135,6 +135,7 @@
         const logCoord = document.getElementById('log-coord');
         const logSpeed = document.getElementById('log-speed');
         const scrollPrompt = document.getElementById('scroll-prompt');
+        const mobileHeader = document.getElementById('mobile-header');
 
         // Dimensions setup
         let width, height;
@@ -316,7 +317,14 @@
             // Update Left HUD contents on chapter transition
             if (currentMilestone !== activeMilestone) {
                 activeMilestone = currentMilestone;
+                
                 if (activeMilestone) {
+                    // Apply dynamic colors to the mobile header
+                    if (mobileHeader) {
+                        mobileHeader.style.borderColor = activeMilestone.color;
+                        mobileHeader.style.boxShadow = `0 4px 20px -2px ${activeMilestone.color}40`; // Adds a subtle colored glow
+                    }
+
                     if (activeMilestone.id === 'nexus') {
                         // Custom Interactive Warp Button inside the HUD Core
                         hudContent.innerHTML = `
@@ -337,6 +345,12 @@
                         `;
                     }
                 } else {
+                    // Reset mobile header to default styling when in empty space
+                    if (mobileHeader) {
+                        mobileHeader.style.borderColor = ''; // Clears inline style, falling back to CSS classes
+                        mobileHeader.style.boxShadow = ''; // Clears the custom glow
+                    }
+
                     hudContent.innerHTML = `
                         <h3 class="text-base font-bold text-white">INFRASTRUCTURE STATUS: ONLINE</h3>
                         <p class="text-xs text-slate-400 leading-relaxed mt-2 font-light">Scroll down to accelerate through the pipeline. The 3D conduit will assemble and morph to represent career chapters.</p>
@@ -481,21 +495,20 @@
         const drawer = document.getElementById('info-drawer');
         const infoBtn = document.getElementById('mobile-info-btn');
         const closeBtn = document.getElementById('drawer-close-btn');
-        const mobileHeader = document.getElementById('mobile-header');
 
         if (infoBtn && closeBtn && drawer) {
             infoBtn.addEventListener('click', () => {
                 drawer.classList.remove('-translate-y-full');
                 drawer.classList.add('translate-y-0');
                 // Hide background header so transparent drawer shadow doesn't overlap text
-                if (mobileHeader) mobileHeader.classList.add('opacity-0', 'pointer-events-none');
+                if (mobileHeader) mobileHeader.classList.add('opacity-0');
             });
             
             closeBtn.addEventListener('click', () => {
                 drawer.classList.remove('translate-y-0');
                 drawer.classList.add('-translate-y-full');
                 // Restore floating header
-                if (mobileHeader) mobileHeader.classList.remove('opacity-0', 'pointer-events-none');
+                if (mobileHeader) mobileHeader.classList.remove('opacity-0');
             });
         }
 
