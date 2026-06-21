@@ -54,9 +54,9 @@
     <header id="mobile-header" class="lg:hidden fixed top-4 left-4 right-4 z-10 flex items-center justify-between bg-slate-900/80 backdrop-blur-md border border-slate-800/60 p-4 rounded-xl shadow-lg pointer-events-none transition-all duration-500">
         <div class="flex flex-col">
             <h1 class="text-lg font-bold text-white leading-tight">Navdeep Sekhon</h1>
-            <p class="text-[10px] font-mono text-indigo-400 uppercase tracking-widest">Software Engineer</p>
+            <p class="text-[10px] font-mono text-indigo-400 uppercase tracking-widest transition-colors duration-500">Software Engineer</p>
         </div>
-        <button id="mobile-info-btn" class="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 rounded-lg text-xs font-mono transition pointer-events-auto select-none">
+        <button id="mobile-info-btn" class="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 rounded-lg text-xs font-mono transition-all duration-500 pointer-events-auto select-none">
             [Info]
         </button>
     </header>
@@ -321,8 +321,22 @@
                 if (activeMilestone) {
                     // Apply dynamic colors to the mobile header
                     if (mobileHeader) {
+                        const hexAlphaBackground = activeMilestone.color + '1A'; // 10% Opacity
+                        
                         mobileHeader.style.borderColor = activeMilestone.color;
-                        mobileHeader.style.boxShadow = `0 4px 20px -2px ${activeMilestone.color}40`; // Adds a subtle colored glow
+                        mobileHeader.style.backgroundColor = hexAlphaBackground;
+                        mobileHeader.style.boxShadow = `0 4px 20px -2px ${activeMilestone.color}40`; // Subtle colored glow
+                        
+                        // Target the sub-text and info button inside the header
+                        const subtitle = mobileHeader.querySelector('p');
+                        const infoBtn = document.getElementById('mobile-info-btn');
+                        
+                        if (subtitle) subtitle.style.color = activeMilestone.color;
+                        if (infoBtn) {
+                            infoBtn.style.color = activeMilestone.color;
+                            infoBtn.style.borderColor = activeMilestone.color + '4D'; // 30% Opacity
+                            infoBtn.style.backgroundColor = hexAlphaBackground;
+                        }
                     }
 
                     if (activeMilestone.id === 'nexus') {
@@ -347,8 +361,19 @@
                 } else {
                     // Reset mobile header to default styling when in empty space
                     if (mobileHeader) {
-                        mobileHeader.style.borderColor = ''; // Clears inline style, falling back to CSS classes
-                        mobileHeader.style.boxShadow = ''; // Clears the custom glow
+                        mobileHeader.style.borderColor = ''; 
+                        mobileHeader.style.backgroundColor = ''; 
+                        mobileHeader.style.boxShadow = ''; 
+                        
+                        const subtitle = mobileHeader.querySelector('p');
+                        const infoBtn = document.getElementById('mobile-info-btn');
+                        
+                        if (subtitle) subtitle.style.color = '';
+                        if (infoBtn) {
+                            infoBtn.style.color = '';
+                            infoBtn.style.borderColor = '';
+                            infoBtn.style.backgroundColor = '';
+                        }
                     }
 
                     hudContent.innerHTML = `
