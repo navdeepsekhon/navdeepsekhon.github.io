@@ -27,11 +27,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 </head>
 
-<body class="bg-slate-950 text-slate-100 font-sans antialiased h-screen overflow-hidden flex flex-col md:flex-row">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased h-screen w-screen overflow-hidden relative">
 
-    <!-- LEFT SIDEBAR: PROFILE & INFO -->
+    <!-- LEFT SIDEBAR / DRAWER -->
     <aside
-        class="w-full md:w-[380px] border-b md:border-b-0 md:border-r border-slate-900 bg-slate-950/80 backdrop-blur p-8 flex flex-col justify-between z-10 shrink-0">
+        class="fixed top-0 left-0 w-full z-20 border-b border-slate-900 bg-slate-950/95 backdrop-blur p-6 flex flex-col gap-4 transition-transform duration-300 translate-y-0 md:absolute md:top-0 md:left-0 md:w-[380px] md:h-screen md:border-b-0 md:border-r md:bg-slate-950/85 md:p-8 md:flex md:flex-col md:justify-between md:translate-y-0 md:z-10 select-none">
+        
+        <!-- Drawer mobile toggle tab button -->
+        <button id="drawer-toggle" class="md:hidden absolute top-full right-4 mt-2 px-3 py-1.5 bg-slate-900/90 border border-emerald-500/30 rounded-md text-[10px] font-mono text-emerald-400 backdrop-blur-md pointer-events-auto shadow-lg select-none">
+            HIDE INFO
+        </button>
+
         <div class="flex flex-col gap-6">
             <div>
                 <h1 class="text-3xl font-extrabold tracking-tight text-white">Navdeep Sekhon</h1>
@@ -43,7 +49,7 @@
             </p>
 
             <!-- Live Physics Controls -->
-            <div class="bg-slate-900/50 border border-slate-900 rounded-xl p-4 flex flex-col gap-4">
+            <div class="bg-slate-900/50 border border-slate-900 rounded-xl p-4 flex flex-col gap-4 pointer-events-auto">
                 <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Sandbox
                     Controls</span>
 
@@ -70,7 +76,7 @@
         </div>
 
         <!-- Contact & Links -->
-        <div class="flex flex-col gap-4 pt-6 border-t border-slate-900 mt-6 md:mt-0">
+        <div class="flex flex-col gap-4 pt-6 border-t border-slate-900 mt-6 md:mt-0 pointer-events-auto">
             <div class="flex gap-4 text-xs font-mono">
                 <a href="mailto:hey@navdeep.co" class="text-slate-400 hover:text-white transition">hey@navdeep.co</a>
                 <span class="text-slate-800">|</span>
@@ -86,16 +92,16 @@
         </div>
     </aside>
 
-    <!-- RIGHT SIDE: THE PHYSICS CANVAS -->
-    <main class="flex-1 relative bg-[#030712] overflow-hidden cursor-crosshair">
+    <!-- THE PHYSICS CANVAS MAIN CONTAINER -->
+    <main class="absolute inset-0 z-0 bg-[#030712] w-full h-full overflow-hidden cursor-crosshair">
         <!-- Floating instruction badge -->
         <div
-            class="absolute top-6 left-6 pointer-events-none z-10 bg-slate-900/80 border border-slate-850 px-4 py-2 rounded-full backdrop-blur-sm text-xs font-mono flex items-center gap-2">
+            class="absolute top-6 left-6 md:left-[400px] pointer-events-none z-10 bg-slate-900/80 border border-slate-850 px-4 py-2 rounded-full backdrop-blur-sm text-xs font-mono flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span class="text-slate-300">LIVE DATA REPLICATION STREAM</span>
         </div>
 
-        <canvas id="physics-canvas" class="w-full h-full block"></canvas>
+        <canvas id="physics-canvas" class="w-full h-full block" style="touch-action: none;"></canvas>
     </main>
 
     <!-- Interactive Logic Code -->
@@ -108,15 +114,26 @@
         window.addEventListener('focus', () => {
             document.title = originalTitle;
         });
+
         const canvas = document.getElementById('physics-canvas');
         const ctx = canvas.getContext('2d');
 
+        let width, height;
+        let scaleFactor = 1;
+
         // Resize Canvas to fit container
         function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
+            width = canvas.width = canvas.parentElement.clientWidth;
+            height = canvas.height = canvas.parentElement.clientHeight;
+            
+            // Reference Size for mobile adaptation is 800px min dimension
+            scaleFactor = Math.min(width, height) / 800;
+            if (scaleFactor < 0.65) scaleFactor = 0.65;
+            if (scaleFactor > 1.1) scaleFactor = 1.1;
         }
+
         resizeCanvas();
+
         window.addEventListener('resize', () => {
             resizeCanvas();
             initPhysics();
@@ -159,15 +176,15 @@
             // 2. Interactive Banners (SNAP, APPLE, BROADRIDGE, JPMORGAN)
             // Staggered Y-coordinates scaled to prevent overlaps
             const blockSpecs = [
-                { text: 'SNAP INC.', color: '#facc15', y: h * 0.18, w: 220, h: 50, desc: 'Ads Infrastructure' },
-                { text: 'APPLE', color: '#10b981', y: h * 0.38, w: 220, h: 50, desc: 'Petabyte Replication' },
-                { text: 'BROADRIDGE', color: '#22d3ee', y: h * 0.58, w: 220, h: 50, desc: 'Whiteboard-to-Prod ETL' },
-                { text: 'JPMORGAN CHASE', color: '#818cf8', y: h * 0.78, w: 220, h: 50, desc: 'DMS & Dynamic UI Gen' }
+                { text: 'SNAP INC.', color: '#facc15', y: h * 0.18, w: 220 * scaleFactor, h: 50 * scaleFactor, desc: 'Ads Infrastructure' },
+                { text: 'APPLE', color: '#10b981', y: h * 0.38, w: 220 * scaleFactor, h: 50 * scaleFactor, desc: 'Petabyte Replication' },
+                { text: 'BROADRIDGE', color: '#22d3ee', y: h * 0.58, w: 220 * scaleFactor, h: 50 * scaleFactor, desc: 'Whiteboard-to-Prod ETL' },
+                { text: 'JPMORGAN CHASE', color: '#818cf8', y: h * 0.78, w: 220 * scaleFactor, h: 50 * scaleFactor, desc: 'DMS & Dynamic UI Gen' }
             ];
 
             interactiveBlocks = blockSpecs.map((spec, i) => {
                 // Stagger starting X positions
-                const x = w / 2 + (i % 2 === 0 ? -100 : 100);
+                const x = w / 2 + (i % 2 === 0 ? -100 * scaleFactor : 100 * scaleFactor);
                 const block = Bodies.rectangle(x, spec.y, spec.w, spec.h, {
                     friction: 0.1,
                     restitution: 0.6,
@@ -201,7 +218,7 @@
 
             // Small randomized X starting spread near the emitter
             const x = emitterX + (Math.random() * 40 - 20);
-            const packet = Bodies.circle(x, emitterY, 4 + Math.random() * 3, {
+            const packet = Bodies.circle(x, emitterY, (4 + Math.random() * 3) * scaleFactor, {
                 restitution: 0.8,
                 friction: 0.01,
                 density: 0.001
@@ -215,8 +232,8 @@
             Composite.add(world, packet);
         }
 
-        // Click to add a custom "Router Node" (bumpers)
-        canvas.addEventListener('mousedown', (e) => {
+        // Click or tap to add a custom "Router Bumper" (pointerdown)
+        canvas.addEventListener('pointerdown', (e) => {
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
@@ -236,14 +253,15 @@
             let clickedOnBumper = false;
             userNodes.forEach(node => {
                 const dist = Math.sqrt((mouseX - node.position.x) ** 2 + (mouseY - node.position.y) ** 2);
-                if (dist < 40) { // 25 radius + margin
+                if (dist < node.circleRadius + 15) { 
                     clickedOnBumper = true;
                 }
             });
             if (clickedOnBumper) return;
 
-            // Spawn the static bumper
-            const userBumper = Bodies.circle(mouseX, mouseY, 25, {
+            // Spawn the static bumper (radius scaled)
+            const radius = 25 * scaleFactor;
+            const userBumper = Bodies.circle(mouseX, mouseY, radius, {
                 isStatic: true,
                 restitution: 1.2
             });
@@ -302,7 +320,7 @@
 
             // Draw Emitter (Glow Effect)
             ctx.beginPath();
-            ctx.arc(emitterX, emitterY, 12, 0, Math.PI * 2);
+            ctx.arc(emitterX, emitterY, 12 * scaleFactor, 0, Math.PI * 2);
             ctx.fillStyle = '#10b981';
             ctx.shadowColor = '#10b981';
             ctx.shadowBlur = 15;
@@ -321,13 +339,13 @@
             ctx.save();
             ctx.strokeStyle = '#6366f1';
             ctx.lineWidth = 2;
-            ctx.font = '9px monospace';
+            ctx.font = `${Math.round(9 * scaleFactor)}px monospace`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
             userNodes.forEach(node => {
                 ctx.beginPath();
-                ctx.arc(node.position.x, node.position.y, 25, 0, Math.PI * 2);
+                ctx.arc(node.position.x, node.position.y, node.circleRadius, 0, Math.PI * 2);
 
                 // Explicit fill reset inside the loop prevents color leakage
                 ctx.fillStyle = '#312e81';
@@ -368,14 +386,14 @@
 
                 // Main Title Text
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 12px sans-serif';
+                ctx.font = `bold ${Math.round(12 * scaleFactor)}px sans-serif`;
                 ctx.textAlign = 'center';
-                ctx.fillText(meta.text, 0, -2);
+                ctx.fillText(meta.text, 0, -2 * scaleFactor);
 
                 // Meta Info/Impact description below
                 ctx.fillStyle = '#64748b';
-                ctx.font = '9px monospace';
-                ctx.fillText(meta.desc, 0, 12);
+                ctx.font = `${Math.round(9 * scaleFactor)}px monospace`;
+                ctx.fillText(meta.desc, 0, 11 * scaleFactor);
 
                 ctx.restore();
             });
@@ -383,6 +401,21 @@
             // Keep the loop running
             requestAnimationFrame(update);
         }
+
+        // Drawer toggle script
+        const aside = document.querySelector('aside');
+        const toggleBtn = document.getElementById('drawer-toggle');
+        toggleBtn.addEventListener('click', () => {
+            if (aside.classList.contains('-translate-y-full')) {
+                aside.classList.remove('-translate-y-full');
+                aside.classList.add('translate-y-0');
+                toggleBtn.textContent = 'HIDE INFO';
+            } else {
+                aside.classList.remove('translate-y-0');
+                aside.classList.add('-translate-y-full');
+                toggleBtn.textContent = 'SHOW INFO';
+            }
+        });
 
         // Fire rendering loop
         requestAnimationFrame(update);

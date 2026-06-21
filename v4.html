@@ -31,7 +31,7 @@
     </style>
 </head>
 
-<body class="bg-[#030712] text-slate-100 font-sans antialiased h-screen w-screen flex flex-col md:flex-row relative">
+<body class="bg-[#030712] text-slate-100 font-sans antialiased h-screen w-screen overflow-hidden relative">
 
     <!-- AUDIO PROMPT OVERLAY -->
     <div id="audio-prompt"
@@ -40,9 +40,15 @@
         <span>Click nodes to synthesize system chimes</span>
     </div>
 
-    <!-- LEFT SIDEBAR: THE INTEL PANEL -->
+    <!-- LEFT SIDEBAR: THE INTEL PANEL / DRAWER -->
     <aside
-        class="w-full md:w-[360px] border-b md:border-b-0 md:border-r border-slate-900 bg-slate-950/85 backdrop-blur-md p-8 flex flex-col justify-between z-10 shrink-0 select-none">
+        class="fixed top-0 left-0 w-full z-20 border-b border-slate-900 bg-slate-950/95 backdrop-blur-md p-6 flex flex-col gap-4 transition-transform duration-300 translate-y-0 md:absolute md:top-0 md:left-0 md:w-[360px] md:h-screen md:border-b-0 md:border-r md:bg-slate-950/85 md:p-8 md:flex md:flex-col md:justify-between md:translate-y-0 md:z-10 select-none">
+        
+        <!-- Drawer mobile toggle tab button -->
+        <button id="drawer-toggle" class="md:hidden absolute top-full right-4 mt-2 px-3 py-1.5 bg-slate-900/90 border border-indigo-500/30 rounded-md text-[10px] font-mono text-indigo-300 backdrop-blur-md pointer-events-auto shadow-lg select-none">
+            HIDE INFO
+        </button>
+
         <div class="flex flex-col gap-6">
             <div>
                 <h1 class="text-3xl font-extrabold tracking-tight text-white">Navdeep Sekhon</h1>
@@ -56,7 +62,7 @@
 
             <!-- Live HUD / Metainfo depending on selected node -->
             <div id="hud-panel"
-                class="bg-slate-900/40 border border-slate-900 rounded-xl p-5 flex flex-col gap-3 min-h-[160px] transition duration-300">
+                class="bg-slate-900/40 border border-slate-900 rounded-xl p-5 flex flex-col gap-3 min-h-[160px] transition duration-300 pointer-events-auto">
                 <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">// Node Telemetry
                     HUD</span>
                 <div id="hud-content">
@@ -68,7 +74,7 @@
         </div>
 
         <!-- System Core footer -->
-        <div class="flex flex-col gap-4 pt-6 border-t border-slate-900 mt-6 md:mt-0">
+        <div class="flex flex-col gap-4 pt-6 border-t border-slate-900 mt-6 md:mt-0 pointer-events-auto">
             <div class="flex gap-4 text-xs font-mono">
                 <a href="mailto:hey@navdeep.co" class="text-slate-400 hover:text-white transition">hey@navdeep.co</a>
                 <span class="text-slate-800">|</span>
@@ -86,8 +92,8 @@
     </aside>
 
     <!-- RIGHT SIDE: THE GRAPHIC SOUNDSTAGE -->
-    <main class="flex-1 relative overflow-hidden bg-[#02040a]">
-        <canvas id="synth-canvas" class="w-full h-full block"></canvas>
+    <main class="absolute inset-0 z-0 bg-[#02040a] w-full h-full overflow-hidden">
+        <canvas id="synth-canvas" class="w-full h-full block" style="touch-action: none;"></canvas>
     </main>
 
     <!-- Synthetic Topology Script -->
@@ -100,6 +106,7 @@
         window.addEventListener('focus', () => {
             document.title = originalTitle;
         });
+
         const canvas = document.getElementById('synth-canvas');
         const ctx = canvas.getContext('2d');
         const hudContent = document.getElementById('hud-content');
@@ -187,6 +194,7 @@
 
         // Layout Physics / Mathematics
         let width, height;
+        let scaleFactor = 1;
         let nodes3D = [];
         let connections = [];
         let dataPackets = [];
@@ -199,12 +207,17 @@
             width = canvas.width = canvas.parentElement.clientWidth;
             height = canvas.height = canvas.parentElement.clientHeight;
 
-            // Define points in 3D Space (X, Y, Z) forming a regular tetrahedron
+            // Reference Size for mobile adaptation is 800px min dimension
+            scaleFactor = Math.min(width, height) / 800;
+            if (scaleFactor < 0.65) scaleFactor = 0.65;
+            if (scaleFactor > 1.1) scaleFactor = 1.1;
+
+            // Define points in 3D Space (X, Y, Z) forming a regular tetrahedron (scaled)
             nodes3D = [
-                { id: 'snap', x: -120, y: -80, z: 80, rx: -120, ry: -80, rz: 80, size: 16, meta: nodesData[0] },
-                { id: 'apple', x: 120, y: -80, z: -80, rx: 120, ry: -80, rz: -80, size: 16, meta: nodesData[1] },
-                { id: 'broadridge', x: -80, y: 100, z: -80, rx: -80, ry: 100, rz: -80, size: 16, meta: nodesData[2] },
-                { id: 'jpmorgan', x: 80, y: 100, z: 80, rx: 80, ry: 100, rz: 80, size: 16, meta: nodesData[3] }
+                { id: 'snap', x: -120 * scaleFactor, y: -80 * scaleFactor, z: 80 * scaleFactor, rx: -120 * scaleFactor, ry: -80 * scaleFactor, rz: 80 * scaleFactor, size: 16 * scaleFactor, meta: nodesData[0] },
+                { id: 'apple', x: 120 * scaleFactor, y: -80 * scaleFactor, z: -80 * scaleFactor, rx: 120 * scaleFactor, ry: -80 * scaleFactor, rz: -80 * scaleFactor, size: 16 * scaleFactor, meta: nodesData[1] },
+                { id: 'broadridge', x: -80 * scaleFactor, y: 100 * scaleFactor, z: -80 * scaleFactor, rx: -80 * scaleFactor, ry: 100 * scaleFactor, rz: -80 * scaleFactor, size: 16 * scaleFactor, meta: nodesData[2] },
+                { id: 'jpmorgan', x: 80 * scaleFactor, y: 100 * scaleFactor, z: 80 * scaleFactor, rx: 80 * scaleFactor, ry: 100 * scaleFactor, rz: 80 * scaleFactor, size: 16 * scaleFactor, meta: nodesData[3] }
             ];
 
             // Connect all 4 points to fully interconnect the tetrahedron structure
@@ -223,8 +236,8 @@
         setup3DNodes();
         window.addEventListener('resize', setup3DNodes);
 
-        // Track Cursor
-        canvas.addEventListener('mousemove', (e) => {
+        // Track Cursor / Pointer
+        canvas.addEventListener('pointermove', (e) => {
             initAudio(); // Unlock audio on first interaction
             const rect = canvas.getBoundingClientRect();
             mouseX = e.clientX - rect.left;
@@ -232,12 +245,12 @@
             isMouseOver = true;
         });
 
-        canvas.addEventListener('mouseleave', () => {
+        canvas.addEventListener('pointerleave', () => {
             isMouseOver = false;
         });
 
-        // Trigger action on Click
-        canvas.addEventListener('click', () => {
+        // Trigger action on Pointer Down (Touch or click)
+        canvas.addEventListener('pointerdown', () => {
             if (activeNode) {
                 // Play specific digital chime
                 playChime(activeNode.meta.freq, 'sine');
@@ -312,16 +325,16 @@
                 let targetX = x1 * perspective + cx;
                 let targetY = y1 * perspective + cy;
 
-                // Apply Elastic Mouse Gravity Force
+                // Apply Elastic Mouse Gravity Force (scaled radius and pull force)
                 if (isMouseOver) {
                     const dx = mouseX - targetX;
                     const dy = mouseY - targetY;
                     const distance = Math.sqrt(dx * dx + dy * dy);
-                    const gravityRadius = 250;
+                    const gravityRadius = 250 * scaleFactor;
 
-                    if (distance < gravityRadius) {
+                    if (distance < gravityRadius && distance > 0) {
                         // Elastic pull proportional to proximity
-                        const pullForce = (1 - distance / gravityRadius) * 45;
+                        const pullForce = (1 - distance / gravityRadius) * 45 * scaleFactor;
                         targetX += (dx / distance) * pullForce;
                         targetY += (dy / distance) * pullForce;
                     }
@@ -366,7 +379,7 @@
                 const py = pkt.from.screenY + (pkt.to.screenY - pkt.from.screenY) * pkt.progress;
 
                 ctx.beginPath();
-                ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+                ctx.arc(px, py, 3.5 * scaleFactor, 0, Math.PI * 2);
                 ctx.fillStyle = pkt.from.meta.color;
 
                 // Draw glowing trail
@@ -378,14 +391,15 @@
                 return true;
             });
 
-            // Check Node Hover Interactions
+            // Check Node Hover/Touch Interactions
             let foundActive = null;
+            const activeThreshold = Math.max(35, 35 * scaleFactor);
             nodes3D.forEach(node => {
                 const dx = mouseX - node.screenX;
                 const dy = mouseY - node.screenY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
-                if (isMouseOver && dist < 35) {
+                if (isMouseOver && dist < activeThreshold) {
                     foundActive = node;
                 }
 
@@ -401,7 +415,7 @@
                 ctx.stroke();
 
                 if (node === activeNode) {
-                    // Pulsating glow ring if hovered
+                    // Pulsating glow ring if hovered/active
                     ctx.beginPath();
                     ctx.arc(0, 0, node.size + 14 + Math.sin(Date.now() / 150) * 3, 0, Math.PI * 2);
                     ctx.strokeStyle = `${node.meta.color}45`;
@@ -417,9 +431,9 @@
 
                 // Typography labels above points
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 11px sans-serif';
+                ctx.font = `bold ${Math.round(11 * scaleFactor)}px sans-serif`;
                 ctx.textAlign = 'center';
-                ctx.fillText(node.meta.title, 0, -22);
+                ctx.fillText(node.meta.title, 0, -22 * scaleFactor);
 
                 ctx.restore();
             });
@@ -447,6 +461,21 @@
 
             requestAnimationFrame(renderLoop);
         }
+
+        // Drawer toggle script
+        const aside = document.querySelector('aside');
+        const toggleBtn = document.getElementById('drawer-toggle');
+        toggleBtn.addEventListener('click', () => {
+            if (aside.classList.contains('-translate-y-full')) {
+                aside.classList.remove('-translate-y-full');
+                aside.classList.add('translate-y-0');
+                toggleBtn.textContent = 'HIDE INFO';
+            } else {
+                aside.classList.remove('translate-y-0');
+                aside.classList.add('-translate-y-full');
+                toggleBtn.textContent = 'SHOW INFO';
+            }
+        });
 
         requestAnimationFrame(renderLoop);
     </script>

@@ -47,12 +47,17 @@
         <div
             class="absolute inset-0 bg-[linear-gradient(to_right,#1f293708_1px,transparent_1px),linear-gradient(to_bottom,#1f293708_1px,transparent_1px)] bg-[size:4rem_4rem]">
         </div>
-        <canvas id="conduit-canvas" class="w-full h-full block"></canvas>
+        <canvas id="conduit-canvas" class="w-full h-full block" style="touch-action: none;"></canvas>
     </div>
 
-    <!-- FOREGROUND: FLOATING GLASS HUD -->
-    <div
-        class="fixed top-0 left-0 w-full lg:w-[480px] h-screen z-10 p-8 flex flex-col justify-between pointer-events-none select-none">
+    <!-- FOREGROUND: FLOATING GLASS HUD / DRAWER -->
+    <aside id="info-drawer"
+        class="fixed top-0 left-0 w-full lg:w-[480px] h-auto lg:h-screen z-20 p-6 lg:p-8 flex flex-col gap-4 lg:justify-between bg-slate-950/95 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none border-b lg:border-b-0 border-slate-900/60 lg:border-none pointer-events-auto lg:pointer-events-none select-none transition-transform duration-300 translate-y-0">
+
+        <!-- Drawer mobile toggle tab button -->
+        <button id="drawer-toggle" class="lg:hidden absolute top-full right-4 mt-2 px-3 py-1.5 bg-slate-900/90 border border-indigo-500/30 rounded-md text-[10px] font-mono text-indigo-300 backdrop-blur-md pointer-events-auto shadow-lg select-none">
+            HIDE INFO
+        </button>
 
         <!-- Header Info -->
         <div>
@@ -81,8 +86,8 @@
         </div>
 
         <!-- Academic & Contact info -->
-        <div class="flex flex-col gap-4 border-t border-slate-900 pt-6">
-            <div class="flex gap-4 text-xs font-mono pointer-events-auto">
+        <div class="flex flex-col gap-4 border-t border-slate-900 pt-6 pointer-events-auto">
+            <div class="flex gap-4 text-xs font-mono">
                 <a href="mailto:hey@navdeep.co" class="text-slate-400 hover:text-white transition">hey@navdeep.co</a>
                 <span class="text-slate-800">|</span>
                 <a href="https://github.com/navdeepsekhon" target="_blank"
@@ -96,7 +101,7 @@
             </div>
         </div>
 
-    </div>
+    </aside>
 
     <!-- SILENT SCROLL HUD PROMPT -->
     <div id="scroll-prompt"
@@ -247,14 +252,14 @@
         let mouseX = 0, mouseY = 0;
         let isMouseOver = false;
 
-        window.addEventListener('mousemove', (e) => {
+        window.addEventListener('pointermove', (e) => {
             const rect = canvas.getBoundingClientRect();
             mouseX = e.clientX - rect.left;
             mouseY = e.clientY - rect.top;
             isMouseOver = true;
         });
 
-        window.addEventListener('mouseleave', () => {
+        window.addEventListener('pointerleave', () => {
             isMouseOver = false;
         });
 
@@ -462,6 +467,21 @@
 
             requestAnimationFrame(update);
         }
+
+        // Drawer toggle handler
+        const drawer = document.getElementById('info-drawer');
+        const toggleBtn = document.getElementById('drawer-toggle');
+        toggleBtn.addEventListener('click', () => {
+            if (drawer.classList.contains('-translate-y-full')) {
+                drawer.classList.remove('-translate-y-full');
+                drawer.classList.add('translate-y-0');
+                toggleBtn.textContent = 'HIDE INFO';
+            } else {
+                drawer.classList.remove('translate-y-0');
+                drawer.classList.add('-translate-y-full');
+                toggleBtn.textContent = 'SHOW INFO';
+            }
+        });
 
         requestAnimationFrame(update);
     </script>
