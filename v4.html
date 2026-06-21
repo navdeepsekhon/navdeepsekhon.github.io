@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="description"
+        content="Navdeep Sekhon — Software Engineer specializing in distributed systems, backend infrastructure, and high-throughput data replication pipelines.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navdeep Sekhon | Software Engineer (Systems Synthesizer)</title>
+    <script src="https://www.googletagmanager.com/gtag/js?id=UA-71739348-1" async></script>
+    <script>
+        function gtag() { dataLayer.push(arguments) }
+        window.dataLayer = window.dataLayer || [];
+        gtag("js", new Date);
+        gtag("config", "UA-71739348-1");
+    </script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Hide scrollbars to maintain focus on the experience */
+        body {
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="bg-[#030712] text-slate-100 font-sans antialiased h-screen w-screen flex flex-col md:flex-row relative">
+
+    <!-- AUDIO PROMPT OVERLAY -->
+    <div id="audio-prompt"
+        class="absolute bottom-6 right-6 z-20 bg-slate-900/90 border border-indigo-500/30 px-4 py-2 rounded-full backdrop-blur text-xs font-mono text-indigo-300 pointer-events-none flex items-center gap-2 animate-bounce">
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></span>
+        <span>Click nodes to synthesize system chimes</span>
+    </div>
+
+    <!-- LEFT SIDEBAR: THE INTEL PANEL -->
+    <aside
+        class="w-full md:w-[360px] border-b md:border-b-0 md:border-r border-slate-900 bg-slate-950/85 backdrop-blur-md p-8 flex flex-col justify-between z-10 shrink-0 select-none">
+        <div class="flex flex-col gap-6">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-white">Navdeep Sekhon</h1>
+                <p class="text-xs font-mono text-indigo-400 mt-1 uppercase tracking-widest">Software Engineer</p>
+            </div>
+
+            <p class="text-xs text-slate-400 leading-relaxed font-light">
+                This interactive canvas maps my career achievements as a live, elastic network topology. Interact with
+                the nodes to probe systems data and trigger audio-synthesized telemetry feedback.
+            </p>
+
+            <!-- Live HUD / Metainfo depending on selected node -->
+            <div id="hud-panel"
+                class="bg-slate-900/40 border border-slate-900 rounded-xl p-5 flex flex-col gap-3 min-h-[160px] transition duration-300">
+                <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">// Node Telemetry
+                    HUD</span>
+                <div id="hud-content">
+                    <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wide">SYSTEM: ONLINE</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed mt-2">Hover or click on the 3D network nodes (Snap,
+                        Apple, Broadridge, JPMorgan) to stream localized impact metrics and system frequencies.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Core footer -->
+        <div class="flex flex-col gap-4 pt-6 border-t border-slate-900 mt-6 md:mt-0">
+            <div class="flex gap-4 text-xs font-mono">
+                <a href="mailto:hey@navdeep.co" class="text-slate-400 hover:text-white transition">hey@navdeep.co</a>
+                <span class="text-slate-800">|</span>
+                <a href="https://github.com/navdeepsekhon" target="_blank"
+                    class="text-slate-400 hover:text-white transition">GitHub</a>
+                <span class="text-slate-800">|</span>
+                <a href="https://www.linkedin.com/in/navdeepsekhon/" target="_blank"
+                    class="text-slate-400 hover:text-white transition">LinkedIn</a>
+            </div>
+            <div class="text-[10px] text-slate-600 font-mono flex justify-between items-center">
+                <span>Core: Web Audio + Canvas 3D</span>
+                <span>v3.2.0</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- RIGHT SIDE: THE GRAPHIC SOUNDSTAGE -->
+    <main class="flex-1 relative overflow-hidden bg-[#02040a]">
+        <canvas id="synth-canvas" class="w-full h-full block"></canvas>
+    </main>
+
+    <!-- Synthetic Topology Script -->
+    <script>
+        // Tab visibility toggle ("Miss You :(")
+        const originalTitle = document.title;
+        window.addEventListener('blur', () => {
+            document.title = 'Miss You :(';
+        });
+        window.addEventListener('focus', () => {
+            document.title = originalTitle;
+        });
+        const canvas = document.getElementById('synth-canvas');
+        const ctx = canvas.getContext('2d');
+        const hudContent = document.getElementById('hud-content');
+        const audioPrompt = document.getElementById('audio-prompt');
+
+        // Audio Context initialization on user interaction
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                audioPrompt.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        // Web Audio Synthesizer: Generates ambient chimes dynamically
+        function playChime(frequency, type = 'sine') {
+            if (!audioCtx) return;
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            const delay = audioCtx.createDelay();
+            const delayGain = audioCtx.createGain();
+
+            osc.connect(gainNode);
+
+            // Connect delays to create spatial depth
+            gainNode.connect(audioCtx.destination);
+            gainNode.connect(delay);
+            delay.connect(delayGain);
+            delayGain.connect(audioCtx.destination);
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+            // Synthesize chime envelope
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.8);
+
+            // Delay effect
+            delay.delayTime.setValueAtTime(0.15, audioCtx.currentTime);
+            delayGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            delayGain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.8);
+        }
+
+        // Project Node Metadata
+        const nodesData = [
+            {
+                id: 'snap',
+                title: 'Snap Inc.',
+                role: 'Software Engineer',
+                metrics: 'Engineering high-scale advertising infrastructure and backend services within the Ads group.',
+                freq: 587.33, // D5 (Bright, clean)
+                color: '#eab308' // Yellow
+            },
+            {
+                id: 'apple',
+                title: 'Apple',
+                role: 'Software Engineer',
+                metrics: 'Responsible for global, cross-region, and cross-datastore replication of petabyte-scale data, improving reliability.',
+                freq: 440.00, // A4 (Warm, robust)
+                color: '#10b981' // Emerald
+            },
+            {
+                id: 'broadridge',
+                title: 'Broadridge',
+                role: 'Software Engineer',
+                metrics: 'Developed an enterprise ETL and search platform from whiteboard design to active production.',
+                freq: 293.66, // D4 (Resonant)
+                color: '#22d3ee' // Cyan
+            },
+            {
+                id: 'jpmorgan',
+                title: 'JPMorgan Chase',
+                role: 'Application Developer',
+                metrics: 'Developed a strategic Document Management System and implemented algorithms to dynamically auto-generate UI screens.',
+                freq: 220.00, // A3 (Deep foundational bass)
+                color: '#818cf8' // Indigo
+            }
+        ];
+
+        // Layout Physics / Mathematics
+        let width, height;
+        let nodes3D = [];
+        let connections = [];
+        let dataPackets = [];
+        let mouseX = 0, mouseY = 0;
+        let isMouseOver = false;
+        let activeNode = null;
+
+        // Custom 3D coordinates for a rotating tetrahedron (pyramid)
+        function setup3DNodes() {
+            width = canvas.width = canvas.parentElement.clientWidth;
+            height = canvas.height = canvas.parentElement.clientHeight;
+
+            // Define points in 3D Space (X, Y, Z) forming a regular tetrahedron
+            nodes3D = [
+                { id: 'snap', x: -120, y: -80, z: 80, rx: -120, ry: -80, rz: 80, size: 16, meta: nodesData[0] },
+                { id: 'apple', x: 120, y: -80, z: -80, rx: 120, ry: -80, rz: -80, size: 16, meta: nodesData[1] },
+                { id: 'broadridge', x: -80, y: 100, z: -80, rx: -80, ry: 100, rz: -80, size: 16, meta: nodesData[2] },
+                { id: 'jpmorgan', x: 80, y: 100, z: 80, rx: 80, ry: 100, rz: 80, size: 16, meta: nodesData[3] }
+            ];
+
+            // Connect all 4 points to fully interconnect the tetrahedron structure
+            connections = [
+                { from: 0, to: 1 },
+                { from: 1, to: 2 },
+                { from: 2, to: 0 },
+                { from: 0, to: 3 },
+                { from: 1, to: 3 },
+                { from: 2, to: 3 }
+            ];
+
+            dataPackets = [];
+        }
+
+        setup3DNodes();
+        window.addEventListener('resize', setup3DNodes);
+
+        // Track Cursor
+        canvas.addEventListener('mousemove', (e) => {
+            initAudio(); // Unlock audio on first interaction
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            isMouseOver = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isMouseOver = false;
+        });
+
+        // Trigger action on Click
+        canvas.addEventListener('click', () => {
+            if (activeNode) {
+                // Play specific digital chime
+                playChime(activeNode.meta.freq, 'sine');
+
+                // Spawn a shockwave of glowing "data packets" running across the cables
+                connections.forEach(conn => {
+                    if (nodes3D[conn.from].id === activeNode.id) {
+                        spawnPacket(conn.from, conn.to);
+                    }
+                    if (nodes3D[conn.to].id === activeNode.id) {
+                        spawnPacket(conn.to, conn.from);
+                    }
+                });
+
+                // Update HUD to show click-ping confirmation
+                hudContent.innerHTML = `
+                    <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wide" style="color: ${activeNode.meta.color}">${activeNode.meta.title}</h3>
+                    <p class="text-[10px] font-mono text-slate-500 uppercase mt-0.5">${activeNode.meta.role}</p>
+                    <p class="text-xs text-slate-300 leading-relaxed mt-2">${activeNode.meta.metrics}</p>
+                    <div class="mt-4 p-2 bg-slate-950 border border-slate-900 rounded font-mono text-[10px] text-emerald-400 flex items-center justify-between">
+                        <span>Pinging Node...</span>
+                        <span>Freq: ${activeNode.meta.freq} Hz</span>
+                    </div>
+                `;
+            }
+        });
+
+        function spawnPacket(fromIdx, toIdx) {
+            dataPackets.push({
+                from: nodes3D[fromIdx],
+                to: nodes3D[toIdx],
+                progress: 0,
+                speed: 0.02 + Math.random() * 0.015
+            });
+        }
+
+        // Render variables
+        let angleY = 0.004; // Passive continuous rotations
+        let angleX = 0.002;
+
+        // ANIMATION LOOP
+        function renderLoop() {
+            ctx.fillStyle = '#02040a';
+            ctx.fillRect(0, 0, width, height);
+
+            const cx = width / 2;
+            const cy = height / 2;
+
+            const cosRY = Math.cos(angleY), sinRY = Math.sin(angleY);
+            const cosRX = Math.cos(angleX), sinRX = Math.sin(angleX);
+
+            // Apply Rotations to original points and store Projected Coordinates
+            nodes3D.forEach(node => {
+                // 3D rotation around Y axis
+                let x1 = node.rx * cosRY - node.rz * sinRY;
+                let z1 = node.rx * sinRY + node.rz * cosRY;
+
+                // 3D rotation around X axis
+                let y1 = node.ry * cosRX - z1 * sinRX;
+                let z2 = node.ry * sinRX + z1 * cosRX;
+
+                // Save rotated states
+                node.rx = x1;
+                node.ry = y1;
+                node.rz = z2;
+
+                // 3D to 2D projection with perspective scaling
+                const fov = 350;
+                const perspective = fov / (fov + z2);
+
+                // Spring Target Position
+                let targetX = x1 * perspective + cx;
+                let targetY = y1 * perspective + cy;
+
+                // Apply Elastic Mouse Gravity Force
+                if (isMouseOver) {
+                    const dx = mouseX - targetX;
+                    const dy = mouseY - targetY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const gravityRadius = 250;
+
+                    if (distance < gravityRadius) {
+                        // Elastic pull proportional to proximity
+                        const pullForce = (1 - distance / gravityRadius) * 45;
+                        targetX += (dx / distance) * pullForce;
+                        targetY += (dy / distance) * pullForce;
+                    }
+                }
+
+                // Smoothly interpolate screen coordinates
+                if (node.screenX === undefined) {
+                    node.screenX = targetX;
+                    node.screenY = targetY;
+                } else {
+                    node.screenX += (targetX - node.screenX) * 0.15;
+                    node.screenY += (targetY - node.screenY) * 0.15;
+                }
+            });
+
+            // Draw elastic connection cables
+            ctx.lineWidth = 1;
+            connections.forEach(conn => {
+                const nodeA = nodes3D[conn.from];
+                const nodeB = nodes3D[conn.to];
+
+                // Fading gradient between the two nodes
+                const gradient = ctx.createLinearGradient(nodeA.screenX, nodeA.screenY, nodeB.screenX, nodeB.screenY);
+                gradient.addColorStop(0, nodeA.meta.color);
+                gradient.addColorStop(0.5, '#1e293b');
+                gradient.addColorStop(1, nodeB.meta.color);
+
+                ctx.strokeStyle = gradient;
+                ctx.beginPath();
+                ctx.moveTo(nodeA.screenX, nodeA.screenY);
+                ctx.lineTo(nodeB.screenX, nodeB.screenY);
+                ctx.stroke();
+            });
+
+            // Animate and draw data packet bursts
+            dataPackets = dataPackets.filter(pkt => {
+                pkt.progress += pkt.speed;
+                if (pkt.progress >= 1) return false;
+
+                // Position calculation along cable path
+                const px = pkt.from.screenX + (pkt.to.screenX - pkt.from.screenX) * pkt.progress;
+                const py = pkt.from.screenY + (pkt.to.screenY - pkt.from.screenY) * pkt.progress;
+
+                ctx.beginPath();
+                ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = pkt.from.meta.color;
+
+                // Draw glowing trail
+                ctx.shadowColor = pkt.from.meta.color;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                return true;
+            });
+
+            // Check Node Hover Interactions
+            let foundActive = null;
+            nodes3D.forEach(node => {
+                const dx = mouseX - node.screenX;
+                const dy = mouseY - node.screenY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (isMouseOver && dist < 35) {
+                    foundActive = node;
+                }
+
+                // Node core ring drawing
+                ctx.save();
+                ctx.translate(node.screenX, node.screenY);
+
+                // Outer halo rings
+                ctx.beginPath();
+                ctx.arc(0, 0, node.size + 8, 0, Math.PI * 2);
+                ctx.strokeStyle = `${node.meta.color}20`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                if (node === activeNode) {
+                    // Pulsating glow ring if hovered
+                    ctx.beginPath();
+                    ctx.arc(0, 0, node.size + 14 + Math.sin(Date.now() / 150) * 3, 0, Math.PI * 2);
+                    ctx.strokeStyle = `${node.meta.color}45`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                // Inner solid node point
+                ctx.beginPath();
+                ctx.arc(0, 0, node.size / 2, 0, Math.PI * 2);
+                ctx.fillStyle = node.meta.color;
+                ctx.fill();
+
+                // Typography labels above points
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(node.meta.title, 0, -22);
+
+                ctx.restore();
+            });
+
+            // Handle HUD Panel update on hover changes
+            if (foundActive !== activeNode) {
+                activeNode = foundActive;
+                if (activeNode) {
+                    // Instantly render HUD on left panel
+                    hudContent.innerHTML = `
+                        <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wide" style="color: ${activeNode.meta.color}">${activeNode.meta.title}</h3>
+                        <p class="text-[10px] font-mono text-slate-500 uppercase mt-0.5">${activeNode.meta.role}</p>
+                        <p class="text-xs text-slate-300 leading-relaxed mt-2">${activeNode.meta.metrics}</p>
+                        <div class="mt-3 text-[10px] font-mono text-slate-500">
+                            FINGERPRINT FREQUENCY: ${activeNode.meta.freq}Hz
+                        </div>
+                    `;
+                } else {
+                    hudContent.innerHTML = `
+                        <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wide">SYSTEM: ONLINE</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed mt-2">Hover or click on the 3D network nodes (Snap, Apple, Broadridge, JPMorgan) to stream localized impact metrics and system frequencies.</p>
+                    `;
+                }
+            }
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        requestAnimationFrame(renderLoop);
+    </script>
+</body>
+
+</html>

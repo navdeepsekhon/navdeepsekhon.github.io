@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="description"
+        content="Navdeep Sekhon — Software Engineer specializing in distributed systems, backend infrastructure, and high-throughput data replication pipelines.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navdeep Sekhon | Software Engineer (3D Conduit)</title>
+    <script src="https://www.googletagmanager.com/gtag/js?id=UA-71739348-1" async></script>
+    <script>
+        function gtag() { dataLayer.push(arguments) }
+        window.dataLayer = window.dataLayer || [];
+        gtag("js", new Date);
+        gtag("config", "UA-71739348-1");
+    </script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Smooth scroll-behavior for transitions */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Hide scrollbars to maintain focus on the experience */
+        body {
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="bg-[#010204] text-slate-100 font-sans antialiased h-screen w-screen relative overflow-y-auto">
+
+    <!-- SCROLL HEIGHT CONTAINER (Allows native scroll bar to drive the 3D flight camera) -->
+    <div class="absolute top-0 left-0 w-full h-[750vh] z-0 pointer-events-none"></div>
+
+    <!-- 3D VIEWPORT (Fixed Fullscreen Canvas) -->
+    <div class="fixed inset-0 z-0 pointer-events-none bg-[#010204]">
+        <!-- Subtle grid backdrop -->
+        <div
+            class="absolute inset-0 bg-[linear-gradient(to_right,#1f293708_1px,transparent_1px),linear-gradient(to_bottom,#1f293708_1px,transparent_1px)] bg-[size:4rem_4rem]">
+        </div>
+        <canvas id="conduit-canvas" class="w-full h-full block"></canvas>
+    </div>
+
+    <!-- FOREGROUND: FLOATING GLASS HUD -->
+    <div
+        class="fixed top-0 left-0 w-full lg:w-[480px] h-screen z-10 p-8 flex flex-col justify-between pointer-events-none select-none">
+
+        <!-- Header Info -->
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-white">Navdeep Sekhon</h1>
+            <p class="text-xs font-mono text-indigo-400 mt-1 uppercase tracking-widest">Software Engineer</p>
+        </div>
+
+        <!-- THE ACTIVE DATA HUD (Fades content dynamically on scroll milestones) -->
+        <div
+            class="bg-slate-950/80 border border-slate-900 rounded-2xl p-6 backdrop-blur-md min-h-[240px] transition duration-300 flex flex-col justify-between shadow-2xl pointer-events-auto">
+            <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">// Core Telemetry
+                HUD</span>
+
+            <div id="hud-content" class="my-4">
+                <!-- Populated dynamically via scroll trigger -->
+                <h3 class="text-base font-bold text-white">INFRASTRUCTURE STATUS: ONLINE</h3>
+                <p class="text-xs text-slate-400 leading-relaxed mt-2 font-light">Scroll down to accelerate through the
+                    pipeline. The 3D conduit will assemble and morph to represent career chapters.</p>
+            </div>
+
+            <!-- Dynamic Telemetry Code stream below -->
+            <div class="border-t border-slate-900/60 pt-3 flex justify-between font-mono text-[9px] text-slate-500">
+                <span id="log-coord">CAM_Z: 0.00</span>
+                <span id="log-speed">SPEED: 0.00</span>
+            </div>
+        </div>
+
+        <!-- Academic & Contact info -->
+        <div class="flex flex-col gap-4 border-t border-slate-900 pt-6">
+            <div class="flex gap-4 text-xs font-mono pointer-events-auto">
+                <a href="mailto:hey@navdeep.co" class="text-slate-400 hover:text-white transition">hey@navdeep.co</a>
+                <span class="text-slate-800">|</span>
+                <a href="https://github.com/navdeepsekhon" target="_blank"
+                    class="text-slate-400 hover:text-white transition">GitHub</a>
+                <span class="text-slate-800">|</span>
+                <a href="https://www.linkedin.com/in/navdeepsekhon/" target="_blank"
+                    class="text-slate-400 hover:text-white transition">LinkedIn</a>
+            </div>
+            <div class="text-[10px] text-slate-600 font-mono">
+                B.S. Computer Engineering — University of Delaware
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SILENT SCROLL HUD PROMPT -->
+    <div id="scroll-prompt"
+        class="absolute bottom-6 right-6 z-20 bg-slate-950/90 border border-indigo-500/30 px-4 py-2 rounded-full backdrop-blur-md text-xs font-mono text-indigo-300 pointer-events-none flex items-center gap-2 animate-bounce transition-opacity duration-300">
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></span>
+        <span>Scroll down to navigate the pipeline</span>
+    </div>
+
+    <!-- 3D Pipeline Vector Engine -->
+    <script>
+        // Tab visibility toggle ("Miss You :(")
+        const originalTitle = document.title;
+        window.addEventListener('blur', () => {
+            document.title = 'Miss You :(';
+        });
+        window.addEventListener('focus', () => {
+            document.title = originalTitle;
+        });
+        const canvas = document.getElementById('conduit-canvas');
+        const ctx = canvas.getContext('2d');
+        const hudContent = document.getElementById('hud-content');
+        const logCoord = document.getElementById('log-coord');
+        const logSpeed = document.getElementById('log-speed');
+        const scrollPrompt = document.getElementById('scroll-prompt');
+
+        // Dimensions setup
+        let width, height;
+        function resizeStage() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        resizeStage();
+        window.addEventListener('resize', resizeStage);
+
+        // True Perspective Projection Matrix with stabilized custom denominator
+        function project(x, y, z, cx, cy, zoom) {
+            const fov = 300;
+            const perspective = fov / (z + 80);
+            return {
+                x: cx + x * perspective * zoom,
+                y: cy + y * perspective * zoom,
+                scale: perspective * zoom
+            };
+        }
+
+        // Project Milestones along the pipeline
+        const milestones = [
+            {
+                z: 1000,
+                title: 'Snap Inc.',
+                role: 'Software Engineer',
+                metrics: 'Engineering high-scale advertising infrastructure and backend services within the Ads group.',
+                color: '#eab308', // Yellow
+                id: 'snap'
+            },
+            {
+                z: 2200,
+                title: 'Apple',
+                role: 'Software Engineer',
+                metrics: 'Responsible for global, cross-region, and cross-datastore replication of petabyte-scale data, improving reliability.',
+                color: '#10b981', // Emerald
+                id: 'apple'
+            },
+            {
+                z: 3400,
+                title: 'Broadridge',
+                role: 'Software Engineer',
+                metrics: 'Developed an enterprise ETL and search platform from whiteboard design to active production.',
+                color: '#22d3ee', // Cyan
+                id: 'broadridge'
+            },
+            {
+                z: 4600,
+                title: 'JPMorgan Chase',
+                role: 'Application Developer',
+                metrics: 'Developed a strategic Document Management System and implemented algorithms to dynamically auto-generate UI screens.',
+                color: '#818cf8', // Indigo
+                id: 'jpmorgan'
+            },
+            {
+                z: 5800,
+                title: 'Nexus Core',
+                role: 'Integrated Architecture',
+                metrics: 'Let\'s collaborate on high-scale distributed architectures, pipeline scaling, and engineering orchestration.',
+                color: '#a78bfa', // Lavender/Purple
+                id: 'nexus'
+            }
+        ];
+
+        // 3D Particles Pool
+        let particles = [];
+        const numParticles = 600;
+        const tunnelLength = 5500;
+
+        // Initialize particles with deterministic indexes
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < numParticles; i++) {
+                particles.push({
+                    index: i,
+                    x: 0, y: 0, z: (i / numParticles) * tunnelLength, // Spaced along tunnel
+                    vx: 0, vy: 0,
+                    size: 1 + Math.random() * 1.5,
+                    color: '#1e293b'
+                });
+            }
+        }
+        initParticles();
+
+        // Calculate smooth positioning of recycled particles to prevent geometric snapping
+        function resetRecycledCoordinates(p) {
+            const angle = (p.index % 12) * (Math.PI * 2 / 12) + (p.z * 0.001);
+            const r = 180 + Math.sin(p.z * 0.015) * 30; // Matches expanded base tunnel radius
+            p.x = Math.sin(p.z * 0.0015) * 110 + Math.cos(angle) * r;
+            p.y = Math.cos(p.z * 0.0015) * 110 + Math.sin(angle) * r;
+            p.vx = 0; p.vy = 0;
+        }
+
+        // ── SCROLL COMPILER ──
+        let scrollFraction = 0;
+        window.addEventListener('scroll', () => {
+            const h = document.documentElement;
+            const b = document.body;
+            const st = 'scrollTop';
+            const sh = 'scrollHeight';
+            scrollFraction = (h[st] || b[st]) / ((h[sh] || b[sh]) - h.clientHeight);
+
+            // Smoothly fade out the bottom-right prompt on first scroll
+            if (scrollFraction > 0.05) {
+                scrollPrompt.classList.add('opacity-0', 'pointer-events-none');
+            } else {
+                scrollPrompt.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        });
+
+        // Smooth scroll reset trigger (The Hyper-Speed Warp)
+        function warpToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Easing interpolation
+        function lerp(start, end, amt) {
+            return (1 - amt) * start + amt * end;
+        }
+
+        // Camera Tracking variables
+        let camX = 0, camY = 0, camZ = 0;
+        let mouseX = 0, mouseY = 0;
+        let isMouseOver = false;
+
+        window.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            isMouseOver = true;
+        });
+
+        window.addEventListener('mouseleave', () => {
+            isMouseOver = false;
+        });
+
+        // Active State Log tracker
+        let activeMilestone = null;
+
+        // CORE ANIMATION LOOP (Runs at 120fps / 60fps)
+        let frame = 0;
+        function update() {
+            frame++;
+
+            // VOLUMETRIC MOTION BLUR: Draw translucent bg instead of flat clear to get glowing trails
+            ctx.fillStyle = 'rgba(1, 2, 4, 0.15)';
+            ctx.fillRect(0, 0, width, height);
+
+            const cx = width / 2;
+            const cy = height / 2;
+
+            // 1. Calculate camera targets based on scroll position
+            const maxZ = 5800; // Aligned to the final milestone depth to prevent overshoot
+            const targetCamZ = scrollFraction * maxZ;
+            const speed = Math.abs(targetCamZ - camZ); // current velocity
+
+            // Smooth camera easing
+            camZ = lerp(camZ, targetCamZ, 0.08);
+
+            // Subtle mouse parallax effect (Sways camera perspective)
+            const targetCamX = isMouseOver ? (mouseX - width / 2) * 0.35 : 0;
+            const targetCamY = isMouseOver ? (mouseY - height / 2) * 0.35 : 0;
+            camX = lerp(camX, targetCamX, 0.08);
+            camY = lerp(camY, targetCamY, 0.08);
+
+            // Update telemetry code logs
+            logCoord.textContent = `CAM_Z: ${camZ.toFixed(2)}`;
+            logSpeed.textContent = `SPEED: ${speed.toFixed(2)}`;
+
+            // 2. Identify active milestone based on camera Z depth
+            let currentMilestone = null;
+            milestones.forEach(m => {
+                if (Math.abs(camZ - m.z) < 400) {
+                    currentMilestone = m;
+                }
+            });
+
+            // Update Left HUD contents on chapter transition
+            if (currentMilestone !== activeMilestone) {
+                activeMilestone = currentMilestone;
+                if (activeMilestone) {
+                    if (activeMilestone.id === 'nexus') {
+                        // Custom Interactive Warp Button inside the HUD Core
+                        hudContent.innerHTML = `
+                            <div class="text-[10px] font-mono text-purple-400 uppercase">SYSTEMS INTEGRATED</div>
+                            <h3 class="text-base font-bold text-white mt-1" style="color: ${activeMilestone.color}">${activeMilestone.title}</h3>
+                            <p class="text-xs text-slate-300 leading-relaxed mt-2 font-light">${activeMilestone.metrics}</p>
+                            <button onclick="warpToTop()" class="mt-4 px-4 py-2 border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 font-mono text-[10px] rounded-full transition-all cursor-pointer select-none pointer-events-auto flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></span>
+                                <span>WARP BACK TO TOP</span>
+                            </button>
+                        `;
+                    } else {
+                        hudContent.innerHTML = `
+                            <div class="text-[10px] font-mono text-slate-500 uppercase">TELEMETRY ESTABLISHED</div>
+                            <h3 class="text-base font-bold text-white mt-1" style="color: ${activeMilestone.color}">${activeMilestone.title}</h3>
+                            <p class="text-[10px] font-mono text-slate-400 mt-0.5">${activeMilestone.role}</p>
+                            <p class="text-xs text-slate-300 leading-relaxed mt-2.5 font-light">${activeMilestone.metrics}</p>
+                        `;
+                    }
+                } else {
+                    hudContent.innerHTML = `
+                        <h3 class="text-base font-bold text-white">INFRASTRUCTURE STATUS: ONLINE</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed mt-2 font-light">Scroll down to accelerate through the pipeline. The 3D conduit will assemble and morph to represent career chapters.</p>
+                    `;
+                }
+            }
+
+            // Calculate global line opacity based on distance to any milestone (tunnel lines fade out near cores)
+            let closestMilestoneDist = 9999;
+            milestones.forEach(m => {
+                const dist = Math.abs(camZ - m.z);
+                if (dist < closestMilestoneDist) {
+                    closestMilestoneDist = dist;
+                }
+            });
+            let lineBaseOpacity = Math.min(0.08, (closestMilestoneDist / 400) * 0.08);
+
+            // ── PROCESS 3D PARTICLE SYSTEMS ──
+            particles.forEach((p, i) => {
+                // Calculate twist curves representing winding pipelines (the structural backbone)
+                const angle = (p.index % 12) * (Math.PI * 2 / 12) + (p.z * 0.001);
+                let targetX = Math.sin(p.z * 0.0015) * 110; // Winding path curves
+                let targetY = Math.cos(p.z * 0.0015) * 110;
+                let radius = 180 + Math.sin(p.z * 0.015) * 30; // Winding cylinder radius
+                let color = '#1e293b'; // Default dark wireframe color
+
+                // If approaching a milestone core, morph particles into dynamic geometry systems
+                milestones.forEach(m => {
+                    const distToCore = Math.abs(p.z - m.z);
+                    if (distToCore < 400) {
+                        const t = 1 - (distToCore / 400); // Transition interpolation factor
+                        color = m.color;
+
+                        if (m.id === 'snap') {
+                            // Morph to spinning double ribbon (Marketplace Loops)
+                            const ribbonAngle = (p.index / numParticles) * Math.PI * 6 + (frame * 0.01);
+                            const ribbonR = 260;
+                            targetX = lerp(targetX, Math.cos(ribbonAngle) * ribbonR, t);
+                            targetY = lerp(targetY, Math.sin(ribbonAngle * 2) * (ribbonR / 2.5), t);
+                        }
+                        else if (m.id === 'apple') {
+                            // Morph to massive flat data pipeline grids
+                            const row = p.index % 8;
+                            const col = Math.floor(p.index / 8);
+                            targetX = lerp(targetX, -380 + (col % 20) * 40, t);
+                            targetY = lerp(targetY, -100 + row * 28, t);
+                        }
+                        else if (m.id === 'broadridge') {
+                            // Morph to splayed outward neural tree network
+                            const bIdx = p.index % 6;
+                            const bDist = (p.index / numParticles) * 380;
+                            const bAngle = (bIdx / 6) * Math.PI * 2;
+                            targetX = lerp(targetX, Math.cos(bAngle) * bDist, t);
+                            targetY = lerp(targetY, Math.sin(bAngle) * bDist, t);
+                        }
+                        else if (m.id === 'jpmorgan') {
+                            // Morph to solid structural 3D data grid
+                            const row = p.index % 10;
+                            const col = Math.floor(p.index / 10);
+                            targetX = lerp(targetX, -200 + (col % 15) * 40, t);
+                            targetY = lerp(targetY, -220 + row * 40, t);
+                        }
+                        else if (m.id === 'nexus') {
+                            // Morph to massive, slow-orbiting cosmic core
+                            const orbitAngle = (p.index / numParticles) * Math.PI * 15 + (frame * 0.003);
+                            const orbitDist = 120 + Math.sin(p.index) * 260;
+                            targetX = lerp(targetX, Math.cos(orbitAngle) * orbitDist, t);
+                            targetY = lerp(orbitAngle, Math.sin(orbitAngle) * orbitDist, t);
+                        }
+                    }
+                });
+
+                // Smoothly interpolate current particle coordinates towards target systems vectors
+                p.x = lerp(p.x, targetX, 0.1);
+                p.y = lerp(p.y, targetY, 0.1);
+                p.color = color;
+
+                // ── DUAL-DIRECTION RECYCLING MATHEMATICS ──
+                // Keeps particles strictly wrapped within camera frustum whether scrolling up or down
+                let needsCoordinateReset = false;
+                while (p.z < camZ) {
+                    p.z += tunnelLength;
+                    needsCoordinateReset = true;
+                }
+                while (p.z > camZ + tunnelLength) {
+                    p.z -= tunnelLength;
+                    needsCoordinateReset = true;
+                }
+
+                // If recycled, calculate starting position to prevent pixel-snapping jumps
+                if (needsCoordinateReset) {
+                    resetRecycledCoordinates(p);
+                }
+
+                // Project points to 2D Screen-space coordinates
+                const relativeZ = p.z - camZ;
+                if (relativeZ > 1) { // Perspective draw cutoff
+                    const proj = project(p.x - camX, p.y - camY, relativeZ, cx, cy, 1.4);
+
+                    // Skip drawing if coordinates are off-screen bounds
+                    if (proj.x > 0 && proj.x < width && proj.y > 0 && proj.y < height) {
+
+                        // ── VOLUMETRIC DEPTH FOG ──
+                        // Calculate fade factor based on Z distance from camera (particles fade out into black fog at depth)
+                        const depthFog = Math.max(0, Math.min(1, 1 - (relativeZ / 3500)));
+
+                        ctx.save();
+                        ctx.globalAlpha = depthFog;
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(proj.x - proj.scale / 2, proj.y - proj.scale / 2, proj.scale * p.size, proj.scale * p.size);
+                        ctx.restore();
+
+                        // Connect wireframe lines (only in default tunnel mode to prevent cluttering)
+                        if (p.index % 12 !== 0 && activeMilestone === null) {
+                            const prev = particles[p.index - 1];
+                            const prevRelZ = prev ? (prev.z - camZ) : -1;
+                            if (prevRelZ > 1) {
+                                const prevProj = project(prev.x - camX, prev.y - camY, prevRelZ, cx, cy, 1.4);
+
+                                // Volumetric line depth fog
+                                const lineFog = Math.max(0, Math.min(1, 1 - (relativeZ / 3500)));
+
+                                ctx.save();
+                                ctx.globalAlpha = lineBaseOpacity * lineFog;
+                                ctx.strokeStyle = '#38bdf8'; // Glowing tech wireframe lines
+                                ctx.lineWidth = 0.5;
+                                ctx.beginPath();
+                                ctx.moveTo(proj.x, proj.y);
+                                ctx.lineTo(prevProj.x, prevProj.y);
+                                ctx.stroke();
+                                ctx.restore();
+                            }
+                        }
+                    }
+                }
+            });
+
+            requestAnimationFrame(update);
+        }
+
+        requestAnimationFrame(update);
+    </script>
+</body>
+
+</html>

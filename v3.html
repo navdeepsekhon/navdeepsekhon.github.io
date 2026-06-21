@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="description"
+        content="Navdeep Sekhon — Software Engineer specializing in distributed systems, backend infrastructure, and high-throughput data replication pipelines.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navdeep Sekhon | Software Engineer (Vector Topology)</title>
+    <script src="https://www.googletagmanager.com/gtag/js?id=UA-71739348-1" async></script>
+    <script>
+        function gtag() { dataLayer.push(arguments) }
+        window.dataLayer = window.dataLayer || [];
+        gtag("js", new Date);
+        gtag("config", "UA-71739348-1");
+    </script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Maintain absolute focus on the interactive viewport */
+        body {
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="bg-[#02040a] text-slate-100 font-sans antialiased h-screen w-screen flex flex-col md:flex-row relative">
+
+    <!-- AUDIO PROMPT HUD -->
+    <div id="audio-prompt"
+        class="absolute bottom-6 right-6 z-20 bg-slate-950/90 border border-emerald-500/30 px-4 py-2 rounded-full backdrop-blur-md text-xs font-mono text-emerald-400 pointer-events-none flex items-center gap-2 animate-bounce">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>Click nodes to propagate system shockwaves</span>
+    </div>
+
+    <!-- LEFT PANEL: HUD CONTROL & LOGISTICS -->
+    <aside
+        class="w-full md:w-[380px] border-b md:border-b-0 md:border-r border-slate-900 bg-slate-950/90 backdrop-blur-lg p-8 flex flex-col justify-between z-10 shrink-0 select-none">
+        <div class="flex flex-col gap-6">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-white">Navdeep Sekhon</h1>
+                <p class="text-xs font-mono text-emerald-500 mt-1 uppercase tracking-widest">Software Engineer</p>
+            </div>
+
+            <p class="text-xs text-slate-400 leading-relaxed font-light">
+                This canvas operates as a mathematical vector field. Mouse coordinates warp the surrounding grid, and
+                node activations propagate physical waves through the connections, mimicking event ripples in a live
+                distributed cluster.
+            </p>
+
+            <!-- Real-time HUD telemetry -->
+            <div id="hud-panel"
+                class="bg-slate-900/30 border border-slate-900 rounded-xl p-5 flex flex-col gap-3 min-h-[180px]">
+                <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">// Real-time Telemetry
+                    stream</span>
+                <div id="hud-content" class="font-mono text-xs text-slate-400 flex flex-col gap-1.5">
+                    <div class="text-emerald-400 font-bold">SYSTEM STATUS: NOMINAL</div>
+                    <div class="text-[10px] text-slate-600 mt-1">Ready for input. Hover to warp space; click nodes to
+                        trigger localized wave distortion and synth telemetry.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact / Links -->
+        <div class="flex flex-col gap-4 pt-6 border-t border-slate-900 mt-6 md:mt-0">
+            <div class="flex gap-4 text-xs font-mono">
+                <a href="mailto:hey@navdeep.co" class="text-slate-400 hover:text-white transition">hey@navdeep.co</a>
+                <span class="text-slate-800">|</span>
+                <a href="https://github.com/navdeepsekhon" target="_blank"
+                    class="text-slate-400 hover:text-white transition">GitHub</a>
+                <span class="text-slate-800">|</span>
+                <a href="https://www.linkedin.com/in/navdeepsekhon/" target="_blank"
+                    class="text-slate-400 hover:text-white transition">LinkedIn</a>
+            </div>
+            <div class="text-[10px] text-slate-600 font-mono flex justify-between items-center">
+                <span>Warp Engine: Pure Math (No WebGL)</span>
+                <span>v4.0.1</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- RIGHT PANEL: INTERACTIVE STAGE -->
+    <main class="flex-1 relative overflow-hidden bg-[#010206]">
+        <canvas id="warp-canvas" class="w-full h-full block"></canvas>
+    </main>
+
+    <!-- Vector Engine Code -->
+    <script>
+        // Tab visibility toggle ("Miss You :(")
+        const originalTitle = document.title;
+        window.addEventListener('blur', () => {
+            document.title = 'Miss You :(';
+        });
+        window.addEventListener('focus', () => {
+            document.title = originalTitle;
+        });
+        const canvas = document.getElementById('warp-canvas');
+        const ctx = canvas.getContext('2d');
+        const hudContent = document.getElementById('hud-content');
+        const audioPrompt = document.getElementById('audio-prompt');
+
+        // Web Audio Setup (Initialized on first interaction)
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                audioPrompt.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        // FM Chime Synthesizer (Generates pristine bell-like tones dynamically)
+        function playSynthesizedChime(carrierFreq, modIndex = 15, modFreqRatio = 2.5) {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const now = audioCtx.currentTime;
+
+            // 1. Nodes definition
+            const carrier = audioCtx.createOscillator();
+            const modulator = audioCtx.createOscillator();
+            const modGain = audioCtx.createGain();
+            const mainGain = audioCtx.createGain();
+            const delay = audioCtx.createDelay();
+            const delayGain = audioCtx.createGain();
+
+            // 2. Modulator routed to Carrier Frequency
+            modulator.connect(modGain);
+            modGain.connect(carrier.frequency);
+
+            // 3. Carrier routed to outputs with spatial delay
+            carrier.connect(mainGain);
+            mainGain.connect(audioCtx.destination);
+            mainGain.connect(delay);
+            delay.connect(delayGain);
+            delayGain.connect(audioCtx.destination);
+
+            // 4. Synthesis parameters
+            carrier.frequency.setValueAtTime(carrierFreq, now);
+            modulator.frequency.setValueAtTime(carrierFreq * modFreqRatio, now);
+
+            // Modulation index envelope (sound evolves over time)
+            modGain.gain.setValueAtTime(carrierFreq * modIndex, now);
+            modGain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+
+            // Master envelope
+            mainGain.gain.setValueAtTime(0.25, now);
+            mainGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+
+            // Soft stereo feedback delay
+            delay.delayTime.setValueAtTime(0.2, now);
+            delayGain.gain.setValueAtTime(0.08, now);
+            delayGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+
+            carrier.start(now);
+            modulator.start(now);
+            carrier.stop(now + 1.8);
+            modulator.stop(now + 1.8);
+        }
+
+        // Nodes Dataset
+        const nodesData = [
+            {
+                id: 'snap',
+                title: 'Snap Inc.',
+                role: 'Software Engineer',
+                metrics: 'Engineering high-scale advertising infrastructure and backend services within the Ads group.',
+                freq: 587.33, // D5
+                color: '#eab308'
+            },
+            {
+                id: 'apple',
+                title: 'Apple',
+                role: 'Software Engineer',
+                metrics: 'Responsible for global, cross-region, and cross-datastore replication of petabyte-scale data, improving reliability.',
+                freq: 440.00, // A4
+                color: '#10b981'
+            },
+            {
+                id: 'broadridge',
+                title: 'Broadridge',
+                role: 'Software Engineer',
+                metrics: 'Developed an enterprise ETL and search platform from whiteboard design to active production.',
+                freq: 293.66, // D4
+                color: '#22d3ee'
+            },
+            {
+                id: 'jpmorgan',
+                title: 'JPMorgan Chase',
+                role: 'Application Developer',
+                metrics: 'Developed a strategic Document Management System and implemented algorithms to dynamically auto-generate UI screens.',
+                freq: 220.00, // A3 (Bass anchor)
+                color: '#818cf8'
+            }
+        ];
+
+        // Coordinate / Math Variables
+        let width, height;
+        let nodes3D = [];
+        let connections = [];
+        let dataPackets = [];
+        let backgroundGrid = [];
+        let ripples = []; // Holds active propagating shockwaves
+        let mouseX = 0, mouseY = 0;
+        let isMouseOver = false;
+        let activeNode = null;
+
+        // Custom Vector deformation Engine (The Math Core)
+        // This function dynamically warps coordinates based on mouse gravity and expanding shockwaves.
+        function deformPoint(x, y) {
+            let dx = x;
+            let dy = y;
+
+            // 1. Mouse Gravity Warp
+            if (isMouseOver) {
+                let mdx = mouseX - x;
+                let mdy = mouseY - y;
+                let dist = Math.sqrt(mdx * mdx + mdy * mdy);
+                let warpRadius = 250;
+
+                if (dist < warpRadius && dist > 1) {
+                    // Pull coordinates smoothly towards mouse
+                    let force = (1 - dist / warpRadius) * 20;
+                    dx += (mdx / dist) * force;
+                    dy += (mdy / dist) * force;
+                }
+            }
+
+            // 2. Wave Propagation Distortion
+            ripples.forEach(r => {
+                let rdx = x - r.x;
+                let rdy = y - r.y;
+                let dist = Math.sqrt(rdx * rdx + rdy * rdy);
+
+                let waveWidth = 100; // Thickness of wave front
+                let diff = Math.abs(dist - r.currentRadius);
+
+                if (diff < waveWidth) {
+                    // Decay wave strength based on radius and distance from front
+                    let ageFactor = 1 - (r.currentRadius / r.maxRadius);
+                    let distanceFactor = 1 - (diff / waveWidth);
+                    let strength = distanceFactor * r.amplitude * ageFactor;
+
+                    if (strength > 0) {
+                        // Push coordinates outward using a sine wave displacement
+                        let angle = Math.atan2(rdy, rdx);
+                        let waveOffset = Math.sin((dist - r.currentRadius) * 0.12) * strength;
+                        dx += Math.cos(angle) * waveOffset;
+                        dy += Math.sin(angle) * waveOffset;
+                    }
+                }
+            });
+
+            return { x: dx, y: dy };
+        }
+
+        // Setup Scene Nodes and Connections
+        function initScene() {
+            width = canvas.width = canvas.parentElement.clientWidth;
+            height = canvas.height = canvas.parentElement.clientHeight;
+
+            // Coordinates for a rotating 3D tetrahedron
+            nodes3D = [
+                { id: 'snap', x: -140, y: -90, z: 90, rx: -140, ry: -90, rz: 90, size: 18, meta: nodesData[0] },
+                { id: 'apple', x: 140, y: -90, z: -90, rx: 140, ry: -90, rz: -90, size: 18, meta: nodesData[1] },
+                { id: 'broadridge', x: -95, y: 110, z: -90, rx: -95, ry: 110, rz: -90, size: 18, meta: nodesData[2] },
+                { id: 'jpmorgan', x: 95, y: 110, z: 90, rx: 95, ry: 110, rz: 90, size: 18, meta: nodesData[3] }
+            ];
+
+            connections = [
+                { from: 0, to: 1 },
+                { from: 1, to: 2 },
+                { from: 2, to: 0 },
+                { from: 0, to: 3 },
+                { from: 1, to: 3 },
+                { from: 2, to: 3 }
+            ];
+
+            // Build dynamic background vector grid
+            backgroundGrid = [];
+            const spacing = 45;
+            for (let x = spacing / 2; x < width; x += spacing) {
+                for (let y = spacing / 2; y < height; y += spacing) {
+                    backgroundGrid.push({ ox: x, oy: y });
+                }
+            }
+
+            dataPackets = [];
+            ripples = [];
+        }
+
+        initScene();
+        window.addEventListener('resize', initScene);
+
+        // Interaction Listeners
+        canvas.addEventListener('mousemove', (e) => {
+            initAudio(); // Unlock audio context safely
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            isMouseOver = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isMouseOver = false;
+        });
+
+        canvas.addEventListener('click', () => {
+            if (activeNode) {
+                // 1. Fire FM Synthesizer
+                playSynthesizedChime(activeNode.meta.freq);
+
+                // 2. Propagate physical shockwave (Ripple)
+                ripples.push({
+                    x: activeNode.screenX,
+                    y: activeNode.screenY,
+                    currentRadius: 0,
+                    maxRadius: Math.max(width, height) * 1.2,
+                    amplitude: 55, // Distortion displacement power
+                    speed: 14 // Pixels per frame propagation
+                });
+
+                // 3. Fire lightning packets across connections
+                connections.forEach(conn => {
+                    if (nodes3D[conn.from].id === activeNode.id) {
+                        spawnPacket(conn.from, conn.to);
+                    }
+                    if (nodes3D[conn.to].id === activeNode.id) {
+                        spawnPacket(conn.to, conn.from);
+                    }
+                });
+
+                // 4. Print telemetry report to HUD
+                const timestamp = new Date().toLocaleTimeString();
+                hudContent.innerHTML = `
+                    <div class="text-emerald-400 font-bold">EVENT STREAM INITIATED</div>
+                    <div class="text-white font-semibold mt-1">${activeNode.meta.title} — Active</div>
+                    <div class="text-slate-500 text-[10px]">${timestamp} | ${activeNode.meta.freq} Hz | SHOCKWAVE PROPAGATING</div>
+                    <div class="text-slate-400 text-[11px] leading-relaxed mt-2 border-l border-slate-800 pl-2 italic">
+                        "${activeNode.meta.metrics}"
+                    </div>
+                `;
+            }
+        });
+
+        function spawnPacket(fromIdx, toIdx) {
+            dataPackets.push({
+                from: nodes3D[fromIdx],
+                to: nodes3D[toIdx],
+                progress: 0,
+                speed: 0.02 + Math.random() * 0.015
+            });
+        }
+
+        // Active rotations variables
+        let angleY = 0.0035;
+        let angleX = 0.0018;
+
+        // ANIMATION LOOP (120fps capability)
+        function renderLoop() {
+            ctx.fillStyle = '#010206';
+            ctx.fillRect(0, 0, width, height);
+
+            const cx = width / 2;
+            const cy = height / 2;
+
+            // Process existing ripples
+            ripples = ripples.filter(r => {
+                r.currentRadius += r.speed;
+                return r.currentRadius < r.maxRadius;
+            });
+
+            // Calculate rotations and perspective transformations
+            const cosRY = Math.cos(angleY), sinRY = Math.sin(angleY);
+            const cosRX = Math.cos(angleX), sinRX = Math.sin(angleX);
+
+            nodes3D.forEach(node => {
+                // Y-axis 3D rotation
+                let x1 = node.rx * cosRY - node.rz * sinRY;
+                let z1 = node.rx * sinRY + node.rz * cosRY;
+
+                // X-axis 3D rotation
+                let y1 = node.ry * cosRX - z1 * sinRX;
+                let z2 = node.ry * sinRX + z1 * cosRX;
+
+                // Store state
+                node.rx = x1;
+                node.ry = y1;
+                node.rz = z2;
+
+                // Convert to projected coordinate system
+                const fov = 350;
+                const perspective = fov / (fov + z2);
+
+                node.targetX = x1 * perspective + cx;
+                node.targetY = y1 * perspective + cy;
+
+                // Smooth coordinate interpolation (spring-back transition)
+                if (node.screenX === undefined) {
+                    node.screenX = node.targetX;
+                    node.screenY = node.targetY;
+                } else {
+                    node.screenX += (node.targetX - node.screenX) * 0.15;
+                    node.screenY += (node.targetY - node.screenY) * 0.15;
+                }
+            });
+
+            // 1. DRAW BACKGROUND VECTOR GRID (Distorted by deformPoint)
+            ctx.fillStyle = '#0e172c';
+            backgroundGrid.forEach(pt => {
+                const deformed = deformPoint(pt.ox, pt.oy);
+
+                // Draw tiny coordinate grid points
+                ctx.fillRect(deformed.x - 1, deformed.y - 1, 2, 2);
+            });
+
+            // 2. DRAW ELASTIC CONNECTION CABLES (Subdivided into segments for curvature warping)
+            connections.forEach(conn => {
+                const nodeA = nodes3D[conn.from];
+                const nodeB = nodes3D[conn.to];
+
+                const gradient = ctx.createLinearGradient(nodeA.screenX, nodeA.screenY, nodeB.screenX, nodeB.screenY);
+                gradient.addColorStop(0, nodeA.meta.color);
+                gradient.addColorStop(0.5, '#1e293b');
+                gradient.addColorStop(1, nodeB.meta.color);
+
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+
+                // Subdivide the path to capture curved spatial deformations
+                const segments = 20;
+                for (let i = 0; i <= segments; i++) {
+                    const t = i / segments;
+                    // Linear interpolation of coordinates
+                    const lx = nodeA.screenX + (nodeB.screenX - nodeA.screenX) * t;
+                    const ly = nodeA.screenY + (nodeB.screenY - nodeA.screenY) * t;
+
+                    // Apply mathematical coordinate warping to intermediate point
+                    const deformed = deformPoint(lx, ly);
+
+                    if (i === 0) {
+                        ctx.moveTo(deformed.x, deformed.y);
+                    } else {
+                        ctx.lineTo(deformed.x, deformed.y);
+                    }
+                }
+                ctx.stroke();
+            });
+
+            // 3. DRAW DATA PACKETS
+            dataPackets = dataPackets.filter(pkt => {
+                pkt.progress += pkt.speed;
+                if (pkt.progress >= 1) return false;
+
+                // Locate linear positions
+                const lx = pkt.from.screenX + (pkt.to.screenX - pkt.from.screenX) * pkt.progress;
+                const ly = pkt.from.screenY + (pkt.to.screenY - pkt.from.screenY) * pkt.progress;
+
+                // Deform the packet's current position to align with cable waves
+                const deformed = deformPoint(lx, ly);
+
+                ctx.beginPath();
+                ctx.arc(deformed.x, deformed.y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = pkt.from.meta.color;
+
+                ctx.shadowColor = pkt.from.meta.color;
+                ctx.shadowBlur = 8;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                return true;
+            });
+
+            // 4. DRAW PROJECT NODES (Elastic coordinate snapping)
+            let foundActive = null;
+            nodes3D.forEach(node => {
+                // Apply spatial deforms directly to our visual node targets
+                const deformed = deformPoint(node.screenX, node.screenY);
+
+                const dx = mouseX - deformed.x;
+                const dy = mouseY - deformed.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (isMouseOver && dist < 35) {
+                    foundActive = node;
+                }
+
+                ctx.save();
+                ctx.translate(deformed.x, deformed.y);
+
+                // Halo circle animations
+                ctx.beginPath();
+                ctx.arc(0, 0, node.size + 6, 0, Math.PI * 2);
+                ctx.strokeStyle = `${node.meta.color}20`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                if (node === activeNode) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, node.size + 12 + Math.sin(Date.now() / 150) * 2, 0, Math.PI * 2);
+                    ctx.strokeStyle = `${node.meta.color}40`;
+                    ctx.stroke();
+                }
+
+                // Inner core node
+                ctx.beginPath();
+                ctx.arc(0, 0, node.size / 2, 0, Math.PI * 2);
+                ctx.fillStyle = node.meta.color;
+                ctx.fill();
+
+                // Typography positioning
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(node.meta.title, 0, -22);
+
+                ctx.restore();
+            });
+
+            // Handle HUD Stream rendering updates on node transitions
+            if (foundActive !== activeNode) {
+                activeNode = foundActive;
+                if (activeNode) {
+                    hudContent.innerHTML = `
+                        <div class="text-slate-500 text-[10px]">LINK DETECTED</div>
+                        <div class="text-white font-bold text-sm mt-1" style="color: ${activeNode.meta.color}">${activeNode.meta.title}</div>
+                        <div class="text-slate-400 text-[10px] font-mono mt-0.5">${activeNode.meta.role}</div>
+                        <div class="text-slate-300 text-[11px] leading-relaxed mt-2 border-l border-slate-800 pl-2">
+                            ${activeNode.meta.metrics}
+                        </div>
+                        <div class="text-[9px] text-slate-500 mt-2 font-mono">
+                            CLICK TO PING NODE AT ${activeNode.meta.freq}Hz
+                        </div>
+                    `;
+                } else {
+                    hudContent.innerHTML = `
+                        <div class="text-emerald-400 font-bold">SYSTEM STATUS: NOMINAL</div>
+                        <div class="text-[10px] text-slate-600 mt-1">Ready for input. Hover to warp space; click nodes to trigger localized wave distortion and synth telemetry.</div>
+                    `;
+                }
+            }
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        requestAnimationFrame(renderLoop);
+    </script>
+</body>
+
+</html>

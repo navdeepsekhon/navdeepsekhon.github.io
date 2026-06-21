@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="description"
+        content="Navdeep Sekhon — Software Engineer specializing in distributed systems, backend infrastructure, and high-throughput data replication pipelines.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navdeep Sekhon | Software Engineer (Physics Sandbox)</title>
+    <script src="https://www.googletagmanager.com/gtag/js?id=UA-71739348-1" async></script>
+    <script>
+        function gtag() { dataLayer.push(arguments) }
+        window.dataLayer = window.dataLayer || [];
+        gtag("js", new Date);
+        gtag("config", "UA-71739348-1");
+    </script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Matter.js Physics Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+</head>
+
+<body class="bg-slate-950 text-slate-100 font-sans antialiased h-screen overflow-hidden flex flex-col md:flex-row">
+
+    <!-- LEFT SIDEBAR: PROFILE & INFO -->
+    <aside
+        class="w-full md:w-[380px] border-b md:border-b-0 md:border-r border-slate-900 bg-slate-950/80 backdrop-blur p-8 flex flex-col justify-between z-10 shrink-0">
+        <div class="flex flex-col gap-6">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-white">Navdeep Sekhon</h1>
+                <p class="text-xs font-mono text-emerald-400 mt-1 uppercase tracking-widest">Software Engineer</p>
+            </div>
+
+            <p class="text-sm text-slate-400 leading-relaxed font-light">
+                I optimize distributed infrastructure, streaming engines, and auction mechanics. Currently based in NYC.
+            </p>
+
+            <!-- Live Physics Controls -->
+            <div class="bg-slate-900/50 border border-slate-900 rounded-xl p-4 flex flex-col gap-4">
+                <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">Sandbox
+                    Controls</span>
+
+                <div class="flex flex-col gap-2.5">
+                    <button id="btn-flood"
+                        class="w-full px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-lg text-xs font-mono transition text-left flex justify-between items-center">
+                        <span>⚡ Flood Pipeline</span>
+                        <span class="text-[9px] opacity-60">Replay High Throughput</span>
+                    </button>
+
+                    <button id="btn-gravity"
+                        class="w-full px-3 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-indigo-400 rounded-lg text-xs font-mono transition text-left flex justify-between items-center">
+                        <span>🪐 Zero Gravity</span>
+                        <span class="text-[9px] opacity-60">Float State</span>
+                    </button>
+
+                    <button id="btn-clear"
+                        class="w-full px-3 py-2 bg-slate-850 hover:bg-slate-800 border border-slate-800 text-slate-400 rounded-lg text-xs font-mono transition text-left flex justify-between items-center">
+                        <span>🧹 Reset Playground</span>
+                        <span class="text-[9px] opacity-60">Clear user nodes</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact & Links -->
+        <div class="flex flex-col gap-4 pt-6 border-t border-slate-900 mt-6 md:mt-0">
+            <div class="flex gap-4 text-xs font-mono">
+                <a href="mailto:hey@navdeep.co" class="text-slate-400 hover:text-white transition">hey@navdeep.co</a>
+                <span class="text-slate-800">|</span>
+                <a href="https://github.com/navdeepsekhon" target="_blank"
+                    class="text-slate-400 hover:text-white transition">GitHub</a>
+                <span class="text-slate-800">|</span>
+                <a href="https://www.linkedin.com/in/navdeepsekhon/" target="_blank"
+                    class="text-slate-400 hover:text-white transition">LinkedIn</a>
+            </div>
+            <div class="text-[10px] text-slate-600 font-mono">
+                Drag the company nodes or click on the canvas to place custom deflectors.
+            </div>
+        </div>
+    </aside>
+
+    <!-- RIGHT SIDE: THE PHYSICS CANVAS -->
+    <main class="flex-1 relative bg-[#030712] overflow-hidden cursor-crosshair">
+        <!-- Floating instruction badge -->
+        <div
+            class="absolute top-6 left-6 pointer-events-none z-10 bg-slate-900/80 border border-slate-850 px-4 py-2 rounded-full backdrop-blur-sm text-xs font-mono flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-slate-300">LIVE DATA REPLICATION STREAM</span>
+        </div>
+
+        <canvas id="physics-canvas" class="w-full h-full block"></canvas>
+    </main>
+
+    <!-- Interactive Logic Code -->
+    <script>
+        // Tab visibility toggle ("Miss You :(")
+        const originalTitle = document.title;
+        window.addEventListener('blur', () => {
+            document.title = 'Miss You :(';
+        });
+        window.addEventListener('focus', () => {
+            document.title = originalTitle;
+        });
+        const canvas = document.getElementById('physics-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Resize Canvas to fit container
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            initPhysics();
+        });
+
+        // Matter.js Setup
+        const { Engine, World, Bodies, Composite, Mouse, MouseConstraint, Body } = Matter;
+        let engine, world, mouseConstraint;
+        let bounds = [];
+        let emitterX, emitterY;
+        let interactiveBlocks = [];
+        let dataPackets = [];
+        let userNodes = [];
+        let maxPackets = 300; // Cap to allow visual flooding
+        let emissionRate = 2; // frames per packet
+
+        function initPhysics() {
+            // Clean slate - resets arrays to prevent memory/stale reference locks on re-init
+            if (engine) World.clear(world, false);
+            engine = Engine.create({ gravity: { y: 0.8 } });
+            world = engine.world;
+
+            dataPackets = [];
+            userNodes = [];
+
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Emitter placement (Top center of the viewport)
+            emitterX = w / 2;
+            emitterY = 30;
+
+            // 1. Static Boundaries (Floor, Walls)
+            const floor = Bodies.rectangle(w / 2, h + 30, w, 60, { isStatic: true });
+            const leftWall = Bodies.rectangle(-30, h / 2, 60, h, { isStatic: true });
+            const rightWall = Bodies.rectangle(w + 30, h / 2, 60, h, { isStatic: true });
+            bounds = [floor, leftWall, rightWall];
+            Composite.add(world, bounds);
+
+            // 2. Interactive Banners (SNAP, APPLE, BROADRIDGE, JPMORGAN)
+            // Staggered Y-coordinates scaled to prevent overlaps
+            const blockSpecs = [
+                { text: 'SNAP INC.', color: '#facc15', y: h * 0.18, w: 220, h: 50, desc: 'Ads Infrastructure' },
+                { text: 'APPLE', color: '#10b981', y: h * 0.38, w: 220, h: 50, desc: 'Petabyte Replication' },
+                { text: 'BROADRIDGE', color: '#22d3ee', y: h * 0.58, w: 220, h: 50, desc: 'Whiteboard-to-Prod ETL' },
+                { text: 'JPMORGAN CHASE', color: '#818cf8', y: h * 0.78, w: 220, h: 50, desc: 'DMS & Dynamic UI Gen' }
+            ];
+
+            interactiveBlocks = blockSpecs.map((spec, i) => {
+                // Stagger starting X positions
+                const x = w / 2 + (i % 2 === 0 ? -100 : 100);
+                const block = Bodies.rectangle(x, spec.y, spec.w, spec.h, {
+                    friction: 0.1,
+                    restitution: 0.6,
+                    density: 0.05
+                });
+                block.customMeta = spec;
+                return block;
+            });
+            Composite.add(world, interactiveBlocks);
+
+            // 3. Setup Mouse constraints to drag nodes around
+            const mouse = Mouse.create(canvas);
+            mouseConstraint = MouseConstraint.create(engine, {
+                mouse: mouse,
+                constraint: {
+                    stiffness: 0.1,
+                    render: { visible: false }
+                }
+            });
+            Composite.add(world, mouseConstraint);
+        }
+
+        initPhysics();
+
+        // Spawn a packet (tiny circle representing data stream)
+        function spawnPacket(customVelX = null) {
+            if (dataPackets.length >= maxPackets) {
+                const oldest = dataPackets.shift();
+                Composite.remove(world, oldest);
+            }
+
+            // Small randomized X starting spread near the emitter
+            const x = emitterX + (Math.random() * 40 - 20);
+            const packet = Bodies.circle(x, emitterY, 4 + Math.random() * 3, {
+                restitution: 0.8,
+                friction: 0.01,
+                density: 0.001
+            });
+
+            // Apply initial velocity (customized velocity helps scatter the flood)
+            const vx = customVelX !== null ? customVelX : (Math.random() * 2 - 1);
+            Body.setVelocity(packet, { x: vx, y: 1 });
+
+            dataPackets.push(packet);
+            Composite.add(world, packet);
+        }
+
+        // Click to add a custom "Router Node" (bumpers)
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // 1. Precise Coordinate checking: Prevent spawning routers on top of corporate blocks
+            let clickedOnBlock = false;
+            interactiveBlocks.forEach(block => {
+                const bounds = block.bounds;
+                if (mouseX >= bounds.min.x - 10 && mouseX <= bounds.max.x + 10 &&
+                    mouseY >= bounds.min.y - 10 && mouseY <= bounds.max.y + 10) {
+                    clickedOnBlock = true;
+                }
+            });
+            if (clickedOnBlock) return;
+
+            // 2. Prevent overlapping/double-spawning on top of existing routers
+            let clickedOnBumper = false;
+            userNodes.forEach(node => {
+                const dist = Math.sqrt((mouseX - node.position.x) ** 2 + (mouseY - node.position.y) ** 2);
+                if (dist < 40) { // 25 radius + margin
+                    clickedOnBumper = true;
+                }
+            });
+            if (clickedOnBumper) return;
+
+            // Spawn the static bumper
+            const userBumper = Bodies.circle(mouseX, mouseY, 25, {
+                isStatic: true,
+                restitution: 1.2
+            });
+
+            userNodes.push(userBumper);
+            Composite.add(world, userBumper);
+        });
+
+        // Toggle Buttons Listeners
+        document.getElementById('btn-flood').addEventListener('click', () => {
+            // Instantly spawn 80 packets in a scattering torrent
+            for (let i = 0; i < 80; i++) {
+                setTimeout(() => {
+                    const scatterVel = (Math.random() * 8 - 4);
+                    spawnPacket(scatterVel);
+                }, i * 15);
+            }
+        });
+
+        let isZeroG = false;
+        document.getElementById('btn-gravity').addEventListener('click', (e) => {
+            isZeroG = !isZeroG;
+            engine.gravity.y = isZeroG ? 0 : 0.8;
+            e.currentTarget.classList.toggle('bg-indigo-500/20');
+        });
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            userNodes.forEach(node => Composite.remove(world, node));
+            userNodes = [];
+        });
+
+        // Core Custom Render Loop
+        let frameCount = 0;
+        function update() {
+            // Step the engine forward
+            Engine.update(engine, 1000 / 60);
+
+            // Handle Packet Emission over time
+            frameCount++;
+            if (frameCount % emissionRate === 0) {
+                spawnPacket();
+            }
+
+            // Remove packets that have fallen out of bounds to prevent memory leaks
+            dataPackets = dataPackets.filter(packet => {
+                if (packet.position.y > canvas.height + 20) {
+                    Composite.remove(world, packet);
+                    return false;
+                }
+                return true;
+            });
+
+            // ── DRAWING OPERATIONS ──
+            ctx.fillStyle = '#030712';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Emitter (Glow Effect)
+            ctx.beginPath();
+            ctx.arc(emitterX, emitterY, 12, 0, Math.PI * 2);
+            ctx.fillStyle = '#10b981';
+            ctx.shadowColor = '#10b981';
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.shadowBlur = 0; // Reset blur
+
+            // Draw Packets (Glowing Particles)
+            ctx.fillStyle = '#67e8f9';
+            dataPackets.forEach(packet => {
+                ctx.beginPath();
+                ctx.arc(packet.position.x, packet.position.y, packet.circleRadius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Draw User static bumpers
+            ctx.save();
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 2;
+            ctx.font = '9px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            userNodes.forEach(node => {
+                ctx.beginPath();
+                ctx.arc(node.position.x, node.position.y, 25, 0, Math.PI * 2);
+
+                // Explicit fill reset inside the loop prevents color leakage
+                ctx.fillStyle = '#312e81';
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw Bumper label perfectly centered on top
+                ctx.fillStyle = '#a5b4fc';
+                ctx.fillText('ROUTER', node.position.x, node.position.y);
+            });
+            ctx.restore();
+
+            // Draw Corporate Banners (Sleek card styles with rotations)
+            interactiveBlocks.forEach(block => {
+                const meta = block.customMeta;
+                const { x, y } = block.position;
+
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(block.angle);
+
+                // Body background (dark card)
+                ctx.fillStyle = '#0f172a';
+                ctx.strokeStyle = meta.color;
+                ctx.lineWidth = 1.5;
+
+                // Glow on hovered/dragged element
+                if (mouseConstraint.body === block) {
+                    ctx.shadowColor = meta.color;
+                    ctx.shadowBlur = 20;
+                }
+
+                ctx.beginPath();
+                ctx.roundRect(-meta.w / 2, -meta.h / 2, meta.w, meta.h, 8);
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowBlur = 0; // Reset
+
+                // Main Title Text
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(meta.text, 0, -2);
+
+                // Meta Info/Impact description below
+                ctx.fillStyle = '#64748b';
+                ctx.font = '9px monospace';
+                ctx.fillText(meta.desc, 0, 12);
+
+                ctx.restore();
+            });
+
+            // Keep the loop running
+            requestAnimationFrame(update);
+        }
+
+        // Fire rendering loop
+        requestAnimationFrame(update);
+    </script>
+</body>
+
+</html>
