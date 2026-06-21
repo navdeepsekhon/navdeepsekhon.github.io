@@ -50,17 +50,28 @@
         <canvas id="conduit-canvas" class="w-full h-full block" style="touch-action: none;"></canvas>
     </div>
 
+    <!-- MOBILE FLOATING HEADER -->
+    <header id="mobile-header" class="lg:hidden fixed top-4 left-4 right-4 z-10 flex items-center justify-between bg-slate-900/80 backdrop-blur-md border border-slate-800/60 p-4 rounded-xl shadow-lg pointer-events-none transition-opacity duration-300">
+        <div class="flex flex-col">
+            <h1 class="text-lg font-bold text-white leading-tight">Navdeep Sekhon</h1>
+            <p class="text-[10px] font-mono text-indigo-400 uppercase tracking-widest">Software Engineer</p>
+        </div>
+        <button id="mobile-info-btn" class="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 rounded-lg text-xs font-mono transition pointer-events-auto select-none">
+            [Info]
+        </button>
+    </header>
+
     <!-- FOREGROUND: FLOATING GLASS HUD / DRAWER -->
     <aside id="info-drawer"
         class="fixed top-0 left-0 w-full lg:w-[480px] h-auto lg:h-screen z-20 p-6 lg:p-8 flex flex-col gap-4 lg:justify-between bg-slate-950/95 lg:bg-transparent backdrop-blur-md lg:backdrop-blur-none border-b lg:border-b-0 border-slate-900/60 lg:border-none pointer-events-auto lg:pointer-events-none select-none transition-transform duration-300 -translate-y-full lg:translate-y-0">
 
-        <!-- Drawer mobile toggle tab button -->
-        <button id="drawer-toggle" class="lg:hidden absolute top-full right-4 mt-2 px-3 py-1.5 bg-slate-900/90 border border-indigo-500/30 rounded-md text-[10px] font-mono text-indigo-300 backdrop-blur-md pointer-events-auto shadow-lg select-none">
-            SHOW INFO
+        <!-- Drawer Close Button (Mobile Only) -->
+        <button id="drawer-close-btn" class="lg:hidden absolute top-6 right-6 px-3 py-1 bg-slate-900 border border-slate-800 rounded-md text-[10px] font-mono text-slate-400 hover:text-white transition pointer-events-auto select-none">
+            Close ✕
         </button>
 
         <!-- Header Info -->
-        <div>
+        <div class="pr-16 lg:pr-0">
             <h1 class="text-3xl font-extrabold tracking-tight text-white">Navdeep Sekhon</h1>
             <p class="text-xs font-mono text-indigo-400 mt-1 uppercase tracking-widest">Software Engineer</p>
         </div>
@@ -68,14 +79,12 @@
         <!-- THE ACTIVE DATA HUD (Fades content dynamically on scroll milestones) -->
         <div
             class="bg-slate-950/80 border border-slate-900 rounded-2xl p-6 backdrop-blur-md min-h-[240px] transition duration-300 flex flex-col justify-between shadow-2xl pointer-events-auto">
-            <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">// Core Telemetry
-                HUD</span>
+            <span class="text-[10px] font-mono text-slate-500 uppercase tracking-wider block">// Core Telemetry HUD</span>
 
             <div id="hud-content" class="my-4">
                 <!-- Populated dynamically via scroll trigger -->
                 <h3 class="text-base font-bold text-white">INFRASTRUCTURE STATUS: ONLINE</h3>
-                <p class="text-xs text-slate-400 leading-relaxed mt-2 font-light">Scroll down to accelerate through the
-                    pipeline. The 3D conduit will assemble and morph to represent career chapters.</p>
+                <p class="text-xs text-slate-400 leading-relaxed mt-2 font-light">Scroll down to accelerate through the pipeline. The 3D conduit will assemble and morph to represent career chapters.</p>
             </div>
 
             <!-- Dynamic Telemetry Code stream below -->
@@ -395,7 +404,7 @@
                             const orbitAngle = (p.index / numParticles) * Math.PI * 15 + (frame * 0.003);
                             const orbitDist = 120 + Math.sin(p.index) * 260;
                             targetX = lerp(targetX, Math.cos(orbitAngle) * orbitDist, t);
-                            targetY = lerp(orbitAngle, Math.sin(orbitAngle) * orbitDist, t);
+                            targetY = lerp(targetY, Math.sin(orbitAngle) * orbitDist, t);
                         }
                     }
                 });
@@ -468,20 +477,27 @@
             requestAnimationFrame(update);
         }
 
-        // Drawer toggle handler
+        // Drawer toggle handler (Updated for dedicated mobile header)
         const drawer = document.getElementById('info-drawer');
-        const toggleBtn = document.getElementById('drawer-toggle');
-        toggleBtn.addEventListener('click', () => {
-            if (drawer.classList.contains('-translate-y-full')) {
+        const infoBtn = document.getElementById('mobile-info-btn');
+        const closeBtn = document.getElementById('drawer-close-btn');
+        const mobileHeader = document.getElementById('mobile-header');
+
+        if (infoBtn && closeBtn && drawer) {
+            infoBtn.addEventListener('click', () => {
                 drawer.classList.remove('-translate-y-full');
                 drawer.classList.add('translate-y-0');
-                toggleBtn.textContent = 'HIDE INFO';
-            } else {
+                // Hide background header so transparent drawer shadow doesn't overlap text
+                if (mobileHeader) mobileHeader.classList.add('opacity-0', 'pointer-events-none');
+            });
+            
+            closeBtn.addEventListener('click', () => {
                 drawer.classList.remove('translate-y-0');
                 drawer.classList.add('-translate-y-full');
-                toggleBtn.textContent = 'SHOW INFO';
-            }
-        });
+                // Restore floating header
+                if (mobileHeader) mobileHeader.classList.remove('opacity-0', 'pointer-events-none');
+            });
+        }
 
         requestAnimationFrame(update);
     </script>
