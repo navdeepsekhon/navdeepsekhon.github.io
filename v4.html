@@ -31,7 +31,18 @@
     </style>
 </head>
 
-<body class="bg-[#030712] text-slate-100 font-sans antialiased h-screen w-screen overflow-hidden relative">
+<body class="bg-[#030712] text-slate-100 font-sans antialiased h-screen w-screen overflow-hidden md:flex md:flex-row relative">
+
+    <!-- MOBILE FLOATING HEADER -->
+    <header class="md:hidden absolute top-4 left-4 right-4 z-20 flex items-center justify-between bg-slate-900/80 backdrop-blur-md border border-slate-800/60 p-4 rounded-xl shadow-lg pointer-events-none">
+        <div class="flex flex-col">
+            <h1 class="text-lg font-bold text-white leading-tight">Navdeep Sekhon</h1>
+            <p class="text-[10px] font-mono text-indigo-400 uppercase tracking-widest">Software Engineer</p>
+        </div>
+        <button id="mobile-info-btn" class="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 rounded-lg text-xs font-mono transition pointer-events-auto select-none">
+            [Info]
+        </button>
+    </header>
 
     <!-- AUDIO PROMPT OVERLAY -->
     <div id="audio-prompt"
@@ -40,13 +51,13 @@
         <span>Click nodes to synthesize system chimes</span>
     </div>
 
-    <!-- LEFT SIDEBAR: THE INTEL PANEL / DRAWER -->
+    <!-- LEFT SIDEBAR: THE INTEL PANEL / MODAL OVERLAY -->
     <aside
-        class="fixed top-0 left-0 w-full z-20 border-b border-slate-900 bg-slate-950/95 backdrop-blur-md p-6 flex flex-col gap-4 transition-transform duration-300 -translate-y-full md:absolute md:top-0 md:left-0 md:w-[360px] md:h-screen md:border-b-0 md:border-r md:bg-slate-950/85 md:p-8 md:flex md:flex-col md:justify-between md:translate-y-0 md:z-10 select-none">
+        class="fixed inset-0 z-30 bg-slate-950/95 backdrop-blur-md p-8 flex flex-col justify-between overflow-y-auto hidden md:flex md:static md:w-[360px] md:h-screen md:border-r md:border-slate-900 md:bg-slate-950/85 md:backdrop-blur-md md:z-10 md:p-8 select-none">
         
-        <!-- Drawer mobile toggle tab button -->
-        <button id="drawer-toggle" class="md:hidden absolute top-full right-4 mt-2 px-3 py-1.5 bg-slate-900/90 border border-indigo-500/30 rounded-md text-[10px] font-mono text-indigo-300 backdrop-blur-md pointer-events-auto shadow-lg select-none">
-            SHOW INFO
+        <!-- Modal close button (mobile only) -->
+        <button id="modal-close-btn" class="md:hidden absolute top-6 right-6 px-3 py-1 bg-slate-900 border border-slate-800 rounded-md text-[10px] font-mono text-slate-400 hover:text-white transition pointer-events-auto select-none">
+            Close ✕
         </button>
 
         <div class="flex flex-col gap-6">
@@ -92,7 +103,7 @@
     </aside>
 
     <!-- RIGHT SIDE: THE GRAPHIC SOUNDSTAGE -->
-    <main class="absolute inset-0 z-0 bg-[#02040a] w-full h-full overflow-hidden">
+    <main class="absolute inset-0 z-0 bg-[#02040a] w-full h-full md:relative md:flex-1 md:h-screen overflow-hidden">
         <canvas id="synth-canvas" class="w-full h-full block" style="touch-action: none;"></canvas>
     </main>
 
@@ -462,20 +473,19 @@
             requestAnimationFrame(renderLoop);
         }
 
-        // Drawer toggle script
-        const aside = document.querySelector('aside');
-        const toggleBtn = document.getElementById('drawer-toggle');
-        toggleBtn.addEventListener('click', () => {
-            if (aside.classList.contains('-translate-y-full')) {
-                aside.classList.remove('-translate-y-full');
-                aside.classList.add('translate-y-0');
-                toggleBtn.textContent = 'HIDE INFO';
-            } else {
-                aside.classList.remove('translate-y-0');
-                aside.classList.add('-translate-y-full');
-                toggleBtn.textContent = 'SHOW INFO';
-            }
-        });
+        // Mobile Modal Toggle Logic
+        const asideModal = document.querySelector('aside');
+        const infoBtn = document.getElementById('mobile-info-btn');
+        const closeBtn = document.getElementById('modal-close-btn');
+
+        if (infoBtn && closeBtn && asideModal) {
+            infoBtn.addEventListener('click', () => {
+                asideModal.classList.remove('hidden');
+            });
+            closeBtn.addEventListener('click', () => {
+                asideModal.classList.add('hidden');
+            });
+        }
 
         requestAnimationFrame(renderLoop);
     </script>
