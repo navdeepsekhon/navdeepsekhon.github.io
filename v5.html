@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- V1 Meta Data -->
+    <title>Navdeep Sekhon | Software Engineer (Load Balancer)</title>
+    <meta name="description"
+        content="Navdeep Sekhon — Software Engineer specializing in distributed systems, backend infrastructure, and high-throughput data replication pipelines.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <!-- Google Analytics & URL Masking -->
+    <script src="https://www.googletagmanager.com/gtag/js?id=UA-71739348-1" async></script>
+    <script>
+        // Mask URL back to root domain
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, '/');
+        }
+
+        function gtag() { dataLayer.push(arguments) }
+        window.dataLayer = window.dataLayer || [];
+        gtag("js", new Date);
+        gtag("config", "UA-71739348-1");
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Matter.js Physics Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050508;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* The Canvas */
+        #game-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            cursor: crosshair;
+        }
+
+        /* Glassmorphism UI Panels */
+        .glass-panel {
+            background: rgba(10, 10, 15, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+        }
+
+        /* Top HUD */
+        #top-hud {
+            position: fixed;
+            top: 1.5rem;
+            left: 1.5rem;
+            right: 1.5rem;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            gap: 1rem;
+        }
+
+        /* The Viral Load Test Button */
+        #btn-loadtest {
+            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            pointer-events: auto;
+        }
+
+        #btn-loadtest:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+        }
+
+        /* Resume Info Popup */
+        #resume-popup {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(150%);
+            width: 90vw;
+            max-width: 500px;
+            z-index: 20;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #resume-popup.active {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Instructions overlay with Pulse Animation */
+        .instruction {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: 800;
+            pointer-events: none;
+            text-align: center;
+            white-space: nowrap;
+            color: #38bdf8;
+            animation: pulse-instruction 2s infinite ease-in-out;
+            transition: opacity 0.5s ease;
+        }
+
+        @media (min-width: 768px) {
+            .instruction {
+                font-size: 2rem;
+            }
+        }
+
+        @keyframes pulse-instruction {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.2;
+                text-shadow: 0 0 10px rgba(56, 189, 248, 0);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.05);
+                opacity: 0.5;
+                text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Accessible Plain Text View -->
+    <main id="plain-resume" class="sr-only">
+        <div class="max-w-3xl mx-auto">
+            <div class="mb-10 text-center md:text-left">
+                <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2">Navdeep Sekhon</h1>
+                <p class="font-mono text-sm uppercase text-blue-400 mb-4 tracking-widest">Senior Software Engineer</p>
+                <div
+                    class="flex flex-wrap justify-center md:justify-start gap-4 font-mono text-xs uppercase text-gray-400">
+                    <a href="mailto:hey@navdeep.co" class="hover:text-white transition">Email</a>
+                    <a href="https://github.com/navdeepsekhon" class="hover:text-white transition">GitHub</a>
+                    <a href="https://linkedin.com/in/navdeepsekhon" class="hover:text-white transition">LinkedIn</a>
+                </div>
+            </div>
+
+            <!-- Dynamic Job Experience Injected Here -->
+            <div id="resume-content"></div>
+
+            <!-- Side Projects Section -->
+            <section class="mt-10 mb-6 bg-white/5 p-6 rounded-lg border border-white/10 shadow-lg">
+                <h2 class="text-xl font-bold mb-4 text-white border-b border-white/10 pb-2">Side Projects</h2>
+                <div class="mb-4">
+                    <h3 class="font-bold text-indigo-400">Kafkaer</h3>
+                    <p class="text-sm text-gray-300 font-light mt-1">Infrastructure-as-Code for Apache Kafka, enabling
+                        version-controlled, template-driven automation of brokers and topics.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-indigo-400">Portfolio Generator</h3>
+                    <p class="text-sm text-gray-300 font-light mt-1">JavaScript framework that dynamically converts a
+                        JSON resume into a portfolio website.</p>
+                </div>
+            </section>
+
+            <!-- Education Section -->
+            <section class="mb-16 bg-white/5 p-6 rounded-lg border border-white/10 shadow-lg">
+                <h2 class="text-xl font-bold mb-4 text-white border-b border-white/10 pb-2">Education</h2>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-bold text-white">University of Delaware</h3>
+                        <p class="text-sm text-gray-300 font-light mt-1">Bachelor of Computer Engineering</p>
+                    </div>
+                    <span class="font-mono text-xs text-gray-500">May 2014</span>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Top HUD (Controls & Identity) -->
+    <div id="top-hud">
+        <div class="glass-panel p-4 md:p-6 max-w-[60%] md:max-w-none">
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight">Navdeep Sekhon</h1>
+            <p class="font-mono text-[10px] text-gray-400 uppercase tracking-widest mt-1">Software Engineer</p>
+            <div class="flex flex-wrap gap-2 md:gap-4 mt-4 font-mono text-[10px] uppercase text-blue-400">
+                <a href="mailto:hey@navdeep.co" class="hover:text-white transition">Email</a>
+                <a href="https://github.com/navdeepsekhon" target="_blank"
+                    class="hover:text-white transition">GitHub</a>
+                <a href="https://linkedin.com/in/navdeepsekhon" target="_blank"
+                    class="hover:text-white transition">LinkedIn</a>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-3 items-end pointer-events-auto">
+            <button id="btn-toggle-view"
+                class="font-mono text-[10px] md:text-xs bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded transition backdrop-blur-md border border-white/10 shadow-lg tracking-widest uppercase text-center w-full max-w-[160px]">
+                [ PLAIN TEXT ]
+            </button>
+            <button id="btn-loadtest" class="font-mono text-[10px] md:text-sm animate-pulse flex flex-col items-center">
+                <span>[ LOAD TEST ]</span>
+                <span class="text-[8px] opacity-70 mt-1 font-normal normal-case hidden md:block">Flood the
+                    network</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Engine & Visual Container -->
+    <div id="game-container" class="transition-opacity duration-300">
+        <div class="instruction font-mono tracking-widest hidden md:block" id="inst-desktop">CLICK OR DRAG TO ROUTE
+            TRAFFIC</div>
+        <div class="instruction font-mono tracking-widest md:hidden" id="inst-mobile">TAP TO ROUTE TRAFFIC</div>
+
+        <canvas id="game-canvas"></canvas>
+
+        <!-- The Resume Achievement Popup -->
+        <div id="resume-popup" class="glass-panel p-6 border-t-4">
+            <div class="flex justify-between items-start mb-2">
+                <p id="pop-role" class="font-mono text-[10px] uppercase tracking-widest text-gray-400">Software Engineer
+                </p>
+                <span id="pop-metric" class="font-mono text-[10px] bg-white/10 px-2 py-1 rounded text-white">100k
+                    OPS</span>
+            </div>
+            <h2 id="pop-title" class="text-3xl font-bold mb-3">Company</h2>
+            <p id="pop-desc" class="text-sm text-gray-300 leading-relaxed font-light">
+                Description goes here.
+            </p>
+        </div>
+    </div>
+
+    <!-- Game Engine & Logic -->
+    <script>
+        // ---------------------------------------------------------
+        // 0. V1 TAB VISIBILITY TOGGLE ("Miss You :(")
+        // ---------------------------------------------------------
+        const originalTitle = document.title;
+        window.addEventListener('blur', () => { document.title = 'Miss You :('; });
+        window.addEventListener('focus', () => { document.title = originalTitle; });
+
+        // ---------------------------------------------------------
+        // 1. DATA (Reverted to exact v1 text for UI Popups)
+        // ---------------------------------------------------------
+        const resumeData = {
+            snap: {
+                title: "Snap Inc.", role: "Senior Software Engineer", metric: "Ads Group",
+                desc: "Engineering high-scale advertising infrastructure and backend services within the Ads group.",
+                color: "#eab308",
+                bullets: [
+                    "Engineered a counterfactual simulation framework to replay production auction traffic, enabling risk-free backtesting of auction mechanics to optimize revenue and delivery.",
+                    "Drove multiple efficiency initiatives resulting in reduced ad server latency and cost.",
+                    "Championed AI-native engineering workflow in the ads org by creating onboarding materials and reusable plugins, accelerating adoption and improving developer productivity."
+                ]
+            },
+            apple: {
+                title: "Apple", role: "Senior Software Engineer", metric: "Petabyte Scale",
+                desc: "Responsible for global, cross-region, and cross-datastore replication of petabyte-scale data, improving reliability.",
+                color: "#10b981",
+                bullets: [
+                    "Replication as service for all Apple (TV, Music, etc.), transporting 500 TB daily.",
+                    "Re-engineered Apple's internal Kafka replication system to make it more efficient.",
+                    "Reduced load on a service by 90%, Kafka IOPS by 50%, increased throughput by 2x, making end to end replication 30% faster.",
+                    "Enhanced Apple’s internal DB replication system with two-way replication for Cassandra, Voldemort.",
+                    "Implemented Kubernetes based integration testing framework to mimic global infrastructure."
+                ]
+            },
+            broadridge: {
+                title: "Broadridge", role: "Sr. Solutions Architect", metric: "ETL & Search",
+                desc: "Developed an enterprise ETL and search platform from whiteboard design to active production.",
+                color: "#22d3ee",
+                bullets: [
+                    "Led the development process for Broadridge's Global Post Trade Management platform.",
+                    "Designed and implemented a NoSQL-backed model-driven search platform, with GraphQL-like API.",
+                    "Engineered an SQL-like REST interface for dynamic querying and converting data into formats such as CSV, XML, and JSON on-the-fly.",
+                    "Developed a Kafka-based ETL platform using microservices architecture with ability to plug-in new services.",
+                    "Pioneered an automated framework to generate Java code from business rules for data transformation.",
+                    "Provided technical leadership to multiple dev teams, scaling the team from 4 engineers to 60.",
+                    "Implemented coding and testing standards, conducted code/design reviews, and actively mentored team members."
+                ]
+            },
+            jpmorgan: {
+                title: "JPMorgan Chase", role: "Application Developer", metric: "Architecture",
+                desc: "Developed a strategic Document Management System and implemented algorithms to dynamically auto-generate UI screens.",
+                color: "#818cf8",
+                bullets: [
+                    "Achieved 1st place in a company-wide new product development challenge for new analysts in 2014.",
+                    "Designed and developed a strategic Document Management System for storing and retrieving legal documents.",
+                    "Collaborated with business partners to deliver frontend, backend, and database functionality.",
+                    "Engineered a model-driven framework for auto-generating JavaScript code for frontend interfaces.",
+                    "Played a pivotal role in all SDLC phases, including design, implementation, and testing."
+                ]
+            }
+        };
+
+        // Resume Keywords mapped to Physics Obstacles (Pegs)
+        const stackLabels = [
+            "Kafka", "Java", "Redis", "Cassandra",
+            "Go", "JavaScript", "GraphQL", "NoSQL",
+            "Kubernetes", "Microservices", "Spring", "ETL", "XQuery"
+        ];
+
+        // ---------------------------------------------------------
+        // 1b. INJECT PLAIN TEXT RESUME DATA (Full Bullet Points)
+        // ---------------------------------------------------------
+        const resumeContainer = document.getElementById('resume-content');
+        Object.values(resumeData).forEach(job => {
+            const section = document.createElement('section');
+            section.className = "mb-6 bg-white/5 p-6 rounded-lg border border-white/10 shadow-lg";
+
+            // Format full resume bullets
+            const bulletsHtml = job.bullets.map(b => `<li>${b}</li>`).join('');
+
+            section.innerHTML = `
+                <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-4 border-b border-white/10 pb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold mb-1" style="color: ${job.color}">${job.title}</h2>
+                        <h3 class="font-mono text-xs uppercase tracking-widest text-gray-400">${job.role}</h3>
+                    </div>
+                    <span class="font-mono text-[10px] bg-white/10 px-2 py-1 rounded text-white mt-3 md:mt-0 self-start md:self-end shadow">${job.metric}</span>
+                </div>
+                <ul class="text-sm text-gray-300 leading-relaxed font-light list-disc list-outside ml-4 space-y-2">
+                    ${bulletsHtml}
+                </ul>
+            `;
+            resumeContainer.appendChild(section);
+        });
+
+        // ---------------------------------------------------------
+        // 2. PHYSICS ENGINE SETUP (Matter.js)
+        // ---------------------------------------------------------
+        const Engine = Matter.Engine,
+            Runner = Matter.Runner,
+            Bodies = Matter.Bodies,
+            Composite = Matter.Composite,
+            Events = Matter.Events;
+
+        const engine = Engine.create();
+        const world = engine.world;
+        const runner = Runner.create();
+
+        engine.positionIterations = 8;
+        engine.velocityIterations = 8;
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
+
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        let isMobile = width < 768;
+
+        canvas.width = width;
+        canvas.height = height;
+
+        window.addEventListener('resize', () => {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            isMobile = width < 768;
+            canvas.width = width;
+            canvas.height = height;
+
+            Matter.World.clear(world, false);
+            activeBalls = [];
+            buildLevel();
+        });
+
+        // ---------------------------------------------------------
+        // 3. BUILD THE PACHINKO BOARD
+        // ---------------------------------------------------------
+        let buckets = [];
+        let pegData = [];
+
+        function buildLevel() {
+            const wallOptions = { isStatic: true, render: { visible: false }, friction: 0, restitution: 0.2 };
+            Composite.add(world, [
+                Bodies.rectangle(-25, height / 2, 50, height * 2, wallOptions),
+                Bodies.rectangle(width + 25, height / 2, 50, height * 2, wallOptions),
+                Bodies.rectangle(width / 2, height + 50, width, 100, wallOptions)
+            ]);
+
+            Composite.add(world, [
+                Bodies.rectangle(0, 100, width * 0.6, 20, { isStatic: true, angle: Math.PI * 0.2, restitution: 0.5, friction: 0 }),
+                Bodies.rectangle(width, 100, width * 0.6, 20, { isStatic: true, angle: -Math.PI * 0.2, restitution: 0.5, friction: 0 })
+            ]);
+
+            pegData = [];
+            const rows = isMobile ? 6 : 8;
+            const cols = isMobile ? 5 : 9;
+            const spacingY = (height * 0.5) / rows;
+            const startY = height * 0.25;
+
+            for (let row = 0; row < rows; row++) {
+                const colsInRow = (row % 2 === 0) ? cols : cols - 1;
+                const spacingX = width / cols;
+                const offsetX = (width - (colsInRow - 1) * spacingX) / 2;
+
+                for (let col = 0; col < colsInRow; col++) {
+                    const x = offsetX + col * spacingX;
+                    const y = startY + row * spacingY;
+
+                    const peg = Bodies.circle(x, y, isMobile ? 8 : 12, {
+                        isStatic: true, restitution: 0.8, friction: 0.01, label: 'peg'
+                    });
+
+                    pegData.push({ body: peg, text: stackLabels[Math.floor(Math.random() * stackLabels.length)], lit: 0 });
+                    Composite.add(world, peg);
+                }
+            }
+
+            buckets = [];
+            const bucketCount = 4;
+            const bucketWidth = width / bucketCount;
+            const bucketHeight = isMobile ? 120 : 180;
+            const keys = ['snap', 'apple', 'broadridge', 'jpmorgan'];
+            const colors = ['#eab308', '#10b981', '#22d3ee', '#818cf8'];
+
+            for (let i = 0; i < bucketCount; i++) {
+                const x = (i * bucketWidth) + (bucketWidth / 2);
+
+                if (i > 0) {
+                    const divider = Bodies.rectangle(i * bucketWidth, height - bucketHeight / 2, 10, bucketHeight, {
+                        isStatic: true, chamfer: { radius: 5 }, friction: 0
+                    });
+                    Composite.add(world, divider);
+                }
+
+                const sensor = Bodies.rectangle(x, height - bucketHeight + 40, bucketWidth - 20, 20, {
+                    isStatic: true, isSensor: true, label: `bucket_${keys[i]}`
+                });
+
+                buckets.push({
+                    body: sensor, key: keys[i], color: colors[i],
+                    x: x, y: height - bucketHeight / 2, w: bucketWidth, h: bucketHeight, flash: 0
+                });
+
+                Composite.add(world, sensor);
+            }
+        }
+        buildLevel();
+
+        // ---------------------------------------------------------
+        // 4. SPAWN LOGIC & LOAD TEST
+        // ---------------------------------------------------------
+        let activeBalls = [];
+
+        function spawnDataPacket(x, y) {
+            const MAX_BALLS = isMobile ? 100 : 300;
+            if (activeBalls.length > MAX_BALLS) {
+                const oldBall = activeBalls.shift();
+                Composite.remove(world, oldBall);
+            }
+
+            const size = isMobile ? 6 + Math.random() * 4 : 8 + Math.random() * 6;
+            const ball = Bodies.circle(x, y, size, {
+                restitution: 0.8, friction: 0.001, density: 0.05, label: 'ball',
+                renderColor: `hsl(${Math.random() * 360}, 100%, 70%)`
+            });
+
+            Matter.Body.setVelocity(ball, { x: (Math.random() - 0.5) * 8, y: Math.random() * 2 });
+            activeBalls.push(ball);
+            Composite.add(world, ball);
+        }
+
+        let isPointerDown = false;
+        let pointerX = width / 2;
+        let hasInteracted = false;
+
+        canvas.addEventListener('pointerdown', (e) => {
+            if (isPlainView) return;
+
+            // Fade out instructions immediately on first click
+            if (!hasInteracted) {
+                hasInteracted = true;
+                document.getElementById('inst-desktop').style.opacity = '0';
+                document.getElementById('inst-mobile').style.opacity = '0';
+            }
+
+            isPointerDown = true;
+            pointerX = e.clientX;
+            spawnDataPacket(pointerX, 20);
+        });
+        canvas.addEventListener('pointermove', (e) => {
+            if (isPointerDown) pointerX = e.clientX;
+        });
+        window.addEventListener('pointerup', () => isPointerDown = false);
+        window.addEventListener('touchend', () => isPointerDown = false);
+
+        setInterval(() => {
+            if (isPointerDown && !isPaused && !isPlainView) spawnDataPacket(pointerX, 20);
+        }, 100);
+
+        const loadBtn = document.getElementById('btn-loadtest');
+        loadBtn.addEventListener('click', () => {
+            // Fade out instructions if they hit the load button before clicking canvas
+            if (!hasInteracted) {
+                hasInteracted = true;
+                document.getElementById('inst-desktop').style.opacity = '0';
+                document.getElementById('inst-mobile').style.opacity = '0';
+            }
+
+            let count = 0;
+            const max = isMobile ? 80 : 180;
+            const interval = setInterval(() => {
+                if (isPaused) { clearInterval(interval); return; }
+                spawnDataPacket(Math.random() * width, -20 - (Math.random() * 60));
+                count++;
+                if (count >= max) clearInterval(interval);
+            }, 15);
+        });
+
+        // ---------------------------------------------------------
+        // 5. GAME LOGIC (Collisions & Popups)
+        // ---------------------------------------------------------
+        let popupTimeout;
+        const popup = document.getElementById('resume-popup');
+
+        function triggerResumePopup(companyKey) {
+            const data = resumeData[companyKey];
+            document.getElementById('pop-title').innerText = data.title;
+            document.getElementById('pop-title').style.color = data.color;
+            document.getElementById('pop-role').innerText = data.role;
+            document.getElementById('pop-metric').innerText = data.metric;
+            document.getElementById('pop-metric').style.color = data.color;
+            document.getElementById('pop-desc').innerText = data.desc;
+
+            popup.style.borderColor = data.color;
+            popup.classList.add('active');
+
+            clearTimeout(popupTimeout);
+            popupTimeout = setTimeout(() => popup.classList.remove('active'), 4000);
+        }
+
+        Events.on(engine, 'collisionStart', (event) => {
+            event.pairs.forEach((pair) => {
+                const { bodyA, bodyB } = pair;
+
+                const peg = pegData.find(p => p.body === bodyA || p.body === bodyB);
+                if (peg) peg.lit = 1.0;
+
+                const checkBucket = (sensor, ball) => {
+                    if (sensor.label.startsWith('bucket_') && ball.label === 'ball' && !ball.hasScored) {
+                        ball.hasScored = true;
+                        ball.scoredAt = Date.now();
+
+                        const key = sensor.label.split('_')[1];
+                        const bucket = buckets.find(b => b.key === key);
+                        if (bucket) bucket.flash = 1.0;
+                        triggerResumePopup(key);
+                    }
+                };
+                checkBucket(bodyA, bodyB);
+                checkBucket(bodyB, bodyA);
+            });
+        });
+
+        // ---------------------------------------------------------
+        // 6. CUSTOM NEON RENDERER (Canvas 2D)
+        // ---------------------------------------------------------
+        let renderId = null;
+        let isPaused = false;
+
+        function renderLoop() {
+            if (isPaused) return;
+
+            ctx.fillStyle = 'rgba(5, 5, 10, 0.4)';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `bold ${isMobile ? 12 : 20}px sans-serif`;
+
+            buckets.forEach(b => {
+                if (b.flash > 0) {
+                    ctx.fillStyle = b.color;
+                    ctx.globalAlpha = b.flash * 0.3;
+                    ctx.fillRect(b.x - b.w / 2, height - b.h, b.w, b.h);
+                    ctx.globalAlpha = 1.0;
+                    b.flash -= 0.05;
+                }
+                ctx.fillStyle = b.color;
+                ctx.globalAlpha = 0.5 + (b.flash * 0.5);
+                ctx.fillText(b.key.toUpperCase(), b.x, height - b.h / 2);
+                ctx.globalAlpha = 1.0;
+            });
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let i = 1; i < 4; i++) {
+                ctx.fillRect(i * (width / 4) - 5, height - (isMobile ? 120 : 180), 10, (isMobile ? 120 : 180));
+            }
+
+            ctx.font = `${isMobile ? 8 : 10}px monospace`;
+            pegData.forEach(p => {
+                const { x, y } = p.body.position;
+                const r = p.body.circleRadius;
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, 2 * Math.PI);
+
+                if (p.lit > 0) {
+                    ctx.fillStyle = `rgba(100, 255, 255, ${p.lit})`;
+                    if (!isMobile) {
+                        ctx.shadowColor = '#0ff';
+                        ctx.shadowBlur = 15;
+                    }
+                    p.lit -= 0.05;
+                } else {
+                    ctx.fillStyle = 'rgba(100, 100, 255, 0.2)';
+                    ctx.shadowBlur = 0;
+                }
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.fillText(p.text, x, y - r - 8);
+            });
+
+            const now = Date.now();
+            activeBalls = activeBalls.filter(ball => {
+                const { x, y } = ball.position;
+
+                if (y > height + 200) {
+                    Composite.remove(world, ball);
+                    return false;
+                }
+
+                let alpha = 1.0;
+                if (ball.hasScored) {
+                    const age = now - ball.scoredAt;
+                    if (age > 3500) {
+                        Composite.remove(world, ball);
+                        return false;
+                    }
+                    alpha = Math.max(0, 1 - (age / 3500));
+                }
+
+                ctx.beginPath();
+                ctx.arc(x, y, ball.circleRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = ball.renderColor;
+                ctx.globalAlpha = alpha;
+
+                if (!isMobile) {
+                    ctx.shadowColor = ball.renderColor;
+                    ctx.shadowBlur = 10 * alpha;
+                }
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+                ctx.shadowBlur = 0;
+
+                return true;
+            });
+
+            renderId = requestAnimationFrame(renderLoop);
+        }
+
+        // ---------------------------------------------------------
+        // 7. GAME STATE & VISIBILITY MANAGEMENT
+        // ---------------------------------------------------------
+        function startGame() {
+            if (!renderId) {
+                isPaused = false;
+                Runner.run(runner, engine);
+                renderLoop();
+
+                // UX IMPROVEMENT: Auto-drop 3 balls on start so they realize it's a physics game instantly
+                setTimeout(() => spawnDataPacket(width / 2 - 30, 20), 500);
+                setTimeout(() => spawnDataPacket(width / 2 + 30, 20), 800);
+                setTimeout(() => spawnDataPacket(width / 2, 20), 1100);
+            }
+        }
+
+        function stopGame() {
+            isPaused = true;
+            Runner.stop(runner);
+            if (renderId) {
+                cancelAnimationFrame(renderId);
+                renderId = null;
+            }
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) stopGame();
+            else if (!isPlainView) startGame();
+        });
+
+        // ---------------------------------------------------------
+        // 8. PLAIN TEXT / INTERACTIVE VIEW TOGGLE
+        // ---------------------------------------------------------
+        const btnToggle = document.getElementById('btn-toggle-view');
+        const plainResume = document.getElementById('plain-resume');
+        const gameContainer = document.getElementById('game-container');
+        let isPlainView = false;
+
+        btnToggle.addEventListener('click', () => {
+            isPlainView = !isPlainView;
+            if (isPlainView) {
+                btnToggle.innerText = "[ INTERACTIVE ]";
+                loadBtn.style.display = 'none';
+
+                plainResume.classList.remove('sr-only');
+                plainResume.classList.add('fixed', 'inset-0', 'z-40', 'bg-[#050508]', 'overflow-y-auto', 'p-6', 'pt-40', 'md:p-12', 'md:pt-32');
+                gameContainer.style.opacity = '0';
+                gameContainer.style.pointerEvents = 'none';
+                stopGame();
+            } else {
+                btnToggle.innerText = "[ PLAIN TEXT ]";
+                loadBtn.style.display = 'flex';
+
+                plainResume.classList.add('sr-only');
+                plainResume.classList.remove('fixed', 'inset-0', 'z-40', 'bg-[#050508]', 'overflow-y-auto', 'p-6', 'pt-40', 'md:p-12', 'md:pt-32');
+                gameContainer.style.opacity = '1';
+                gameContainer.style.pointerEvents = 'auto';
+                startGame();
+            }
+        });
+
+        // Boot system
+        startGame();
+
+    </script>
+</body>
+
+</html>
