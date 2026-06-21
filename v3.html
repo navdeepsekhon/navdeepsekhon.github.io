@@ -312,7 +312,6 @@
 
         // Interaction Listeners (pointermove, pointerleave, pointerdown)
         canvas.addEventListener('pointermove', (e) => {
-            initAudio(); // Unlock audio context safely
             const rect = canvas.getBoundingClientRect();
             mouseX = e.clientX - rect.left;
             mouseY = e.clientY - rect.top;
@@ -323,19 +322,43 @@
             isMouseOver = false;
         });
 
-        canvas.addEventListener('pointerdown', () => {
-            if (activeNode) {
-                // 1. Fire FM Synthesizer
+        canvas.addEventListener('pointerdown', (e) => {
+            initAudio(); // Unlock audio context safely on click/touch
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // Focus spatial warp on clicked point immediately
+            mouseX = clickX;
+            mouseY = clickY;
+            isMouseOver = true;
+
+            // Touch screen hit validation (larger hitbox on mobile)
+            const hitRadius = window.innerWidth < 768 ? 45 : 35;
+            let clickedNode = null;
+            nodes3D.forEach(node => {
+                const deformed = deformPoint(node.screenX, node.screenY);
+                const dx = clickX - deformed.x;
+                const dy = clickY - deformed.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < hitRadius) {
+                    clickedNode = node;
+                }
+            });
+
+            if (clickedNode) {
+                activeNode = clickedNode;
+                // 1. Play synthesizer chime
                 playSynthesizedChime(activeNode.meta.freq);
 
-                // 2. Propagate physical shockwave (Ripple)
+                // 2. Propagate event ripple
                 ripples.push({
                     x: activeNode.screenX,
                     y: activeNode.screenY,
                     currentRadius: 0,
                     maxRadius: Math.max(width, height) * 1.2,
-                    amplitude: 55 * scaleFactor, // Distortion displacement power
-                    speed: 14 // Pixels per frame propagation
+                    amplitude: 55 * scaleFactor,
+                    speed: 14
                 });
 
                 // 3. Fire lightning packets across connections
@@ -347,6 +370,14 @@
                         spawnPacket(conn.to, conn.from);
                     }
                 });
+
+                updateHUD(activeNode);
+            } else {
+                // If tapped empty space on mobile, clear selection
+                if (window.innerWidth < 768 && activeNode !== null) {
+                    activeNode = null;
+                    resetHUD();
+                }
             }
         });
 
@@ -362,6 +393,28 @@
         // Active continuous rotation parameters
         let rotationAngleY = 0.005;
         let rotationAngleX = 0.0025;
+
+        // UI Telemetry HUD updates
+        function updateHUD(node) {
+            hudContent.innerHTML = `
+                <div class="text-slate-500 text-[10px]">LINK DETECTED</div>
+                <div class="text-white font-bold text-sm mt-1" style="color: ${node.meta.color}">${node.meta.title}</div>
+                <div class="text-slate-400 text-[10px] font-mono mt-0.5">${node.meta.role}</div>
+                <div class="text-slate-300 text-[11px] leading-relaxed mt-2 border-l border-slate-800 pl-2">
+                    ${node.meta.metrics}
+                </div>
+                <div class="text-[9px] text-slate-500 mt-2 font-mono">
+                    CLICK TO PING NODE AT ${node.meta.freq}Hz
+                </div>
+            `;
+        }
+
+        function resetHUD() {
+            hudContent.innerHTML = `
+                <div class="text-emerald-400 font-bold">SYSTEM STATUS: NOMINAL</div>
+                <div class="text-[10px] text-slate-600 mt-1">Ready for input. Hover to warp space; click nodes to trigger localized wave distortion and synth telemetry.</div>
+            `;
+        }
 
         // MAIN VECTOR FIELD ENGINE RENDER LOOP
         function renderLoop() {
@@ -518,25 +571,13 @@
             });
 
             // Handle HUD Stream rendering updates on node transitions
-            if (foundActive !== activeNode) {
+            if (foundActive !== null && foundActive !== activeNode) {
                 activeNode = foundActive;
-                if (activeNode) {
-                    hudContent.innerHTML = `
-                        <div class="text-slate-500 text-[10px]">LINK DETECTED</div>
-                        <div class="text-white font-bold text-sm mt-1" style="color: ${activeNode.meta.color}">${activeNode.meta.title}</div>
-                        <div class="text-slate-400 text-[10px] font-mono mt-0.5">${activeNode.meta.role}</div>
-                        <div class="text-slate-300 text-[11px] leading-relaxed mt-2 border-l border-slate-800 pl-2">
-                            ${activeNode.meta.metrics}
-                        </div>
-                        <div class="text-[9px] text-slate-500 mt-2 font-mono">
-                            CLICK TO PING NODE AT ${activeNode.meta.freq}Hz
-                        </div>
-                    `;
-                } else {
-                    hudContent.innerHTML = `
-                        <div class="text-emerald-400 font-bold">SYSTEM STATUS: NOMINAL</div>
-                        <div class="text-[10px] text-slate-600 mt-1">Ready for input. Hover to warp space; click nodes to trigger localized wave distortion and synth telemetry.</div>
-                    `;
+                updateHUD(activeNode);
+            } else if (foundActive === null && isMouseOver && window.innerWidth >= 768) {
+                if (activeNode !== null) {
+                    activeNode = null;
+                    resetHUD();
                 }
             }
 

@@ -247,9 +247,8 @@
         setup3DNodes();
         window.addEventListener('resize', setup3DNodes);
 
-        // Track Cursor / Pointer
+        // Track Cursor / Pointer (Passive Desktop Warp)
         canvas.addEventListener('pointermove', (e) => {
-            initAudio(); // Unlock audio on first interaction
             const rect = canvas.getBoundingClientRect();
             mouseX = e.clientX - rect.left;
             mouseY = e.clientY - rect.top;
@@ -260,9 +259,32 @@
             isMouseOver = false;
         });
 
-        // Trigger action on Pointer Down (Touch or click)
-        canvas.addEventListener('pointerdown', () => {
-            if (activeNode) {
+        // Trigger action on Pointer Down (Unified Touch/Click Interaction)
+        canvas.addEventListener('pointerdown', (e) => {
+            initAudio(); // Unlock audio context safely on mobile
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // Align space warp center immediately
+            mouseX = clickX;
+            mouseY = clickY;
+            isMouseOver = true;
+
+            // Touch screen hit validation (larger hitbox on mobile screens)
+            const hitRadius = window.innerWidth < 768 ? 45 : 35;
+            let clickedNode = null;
+            nodes3D.forEach(node => {
+                const dx = clickX - node.screenX;
+                const dy = clickY - node.screenY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < hitRadius) {
+                    clickedNode = node;
+                }
+            });
+
+            if (clickedNode) {
+                activeNode = clickedNode;
                 // Play specific digital chime
                 playChime(activeNode.meta.freq, 'sine');
 
@@ -276,16 +298,13 @@
                     }
                 });
 
-                // Update HUD to show click-ping confirmation
-                hudContent.innerHTML = `
-                    <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wide" style="color: ${activeNode.meta.color}">${activeNode.meta.title}</h3>
-                    <p class="text-[10px] font-mono text-slate-500 uppercase mt-0.5">${activeNode.meta.role}</p>
-                    <p class="text-xs text-slate-300 leading-relaxed mt-2">${activeNode.meta.metrics}</p>
-                    <div class="mt-4 p-2 bg-slate-950 border border-slate-900 rounded font-mono text-[10px] text-emerald-400 flex items-center justify-between">
-                        <span>Pinging Node...</span>
-                        <span>Freq: ${activeNode.meta.freq} Hz</span>
-                    </div>
-                `;
+                clickHUD(activeNode);
+            } else {
+                // Tapped empty space on mobile: Reset selection
+                if (window.innerWidth < 768 && activeNode !== null) {
+                    activeNode = null;
+                    resetHUD();
+                }
             }
         });
 
@@ -301,6 +320,37 @@
         // Render variables
         let angleY = 0.004; // Passive continuous rotations
         let angleX = 0.002;
+
+        // UI Telemetry HUD updates
+        function updateHUD(node) {
+            hudContent.innerHTML = `
+                <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wide" style="color: ${node.meta.color}">${node.meta.title}</h3>
+                <p class="text-[10px] font-mono text-slate-500 uppercase mt-0.5">${node.meta.role}</p>
+                <p class="text-xs text-slate-300 leading-relaxed mt-2">${node.meta.metrics}</p>
+                <div class="mt-3 text-[10px] font-mono text-slate-500">
+                    FINGERPRINT FREQUENCY: ${node.meta.freq}Hz
+                </div>
+            `;
+        }
+
+        function clickHUD(node) {
+            hudContent.innerHTML = `
+                <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wide" style="color: ${node.meta.color}">${node.meta.title}</h3>
+                <p class="text-[10px] font-mono text-slate-500 uppercase mt-0.5">${node.meta.role}</p>
+                <p class="text-xs text-slate-300 leading-relaxed mt-2">${node.meta.metrics}</p>
+                <div class="mt-4 p-2 bg-slate-950 border border-slate-900 rounded font-mono text-[10px] text-emerald-400 flex items-center justify-between">
+                    <span>Pinging Node...</span>
+                    <span>Freq: ${node.meta.freq} Hz</span>
+                </div>
+            `;
+        }
+
+        function resetHUD() {
+            hudContent.innerHTML = `
+                <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wide">SYSTEM: ONLINE</h3>
+                <p class="text-xs text-slate-400 leading-relaxed mt-2">Hover or click on the 3D network nodes (Snap, Apple, Broadridge, JPMorgan) to stream localized impact metrics and system frequencies.</p>
+            `;
+        }
 
         // ANIMATION LOOP
         function renderLoop() {
@@ -450,23 +500,13 @@
             });
 
             // Handle HUD Panel update on hover changes
-            if (foundActive !== activeNode) {
+            if (foundActive !== null && foundActive !== activeNode) {
                 activeNode = foundActive;
-                if (activeNode) {
-                    // Instantly render HUD on left panel
-                    hudContent.innerHTML = `
-                        <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wide" style="color: ${activeNode.meta.color}">${activeNode.meta.title}</h3>
-                        <p class="text-[10px] font-mono text-slate-500 uppercase mt-0.5">${activeNode.meta.role}</p>
-                        <p class="text-xs text-slate-300 leading-relaxed mt-2">${activeNode.meta.metrics}</p>
-                        <div class="mt-3 text-[10px] font-mono text-slate-500">
-                            FINGERPRINT FREQUENCY: ${activeNode.meta.freq}Hz
-                        </div>
-                    `;
-                } else {
-                    hudContent.innerHTML = `
-                        <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wide">SYSTEM: ONLINE</h3>
-                        <p class="text-xs text-slate-400 leading-relaxed mt-2">Hover or click on the 3D network nodes (Snap, Apple, Broadridge, JPMorgan) to stream localized impact metrics and system frequencies.</p>
-                    `;
+                updateHUD(activeNode);
+            } else if (foundActive === null && isMouseOver && window.innerWidth >= 768) {
+                if (activeNode !== null) {
+                    activeNode = null;
+                    resetHUD();
                 }
             }
 
